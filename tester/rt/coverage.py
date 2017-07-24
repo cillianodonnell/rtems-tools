@@ -439,10 +439,3 @@ class coverage_run(object):
 
 def output_handler(text):
     log.notice(text, stdout_only = False)
-
-if __name__ == "__main__":
-    print "coverage main"
-    c = coverage_run("/home/cpod/coverage_test/leon3","/home/cpod/development/rtems/test/rtems-tools/tester")
-    c.prepare_environment()
-    c.executables = ["/home/cpod/development/rtems/leon3/sparc-rtems4.12/c/leon3/testsuites/samples/hello/hello.ralf"]
-    c.run()
