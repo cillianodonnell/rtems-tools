@@ -318,7 +318,6 @@ class covoar(object):
         path.join(covoar_result_dir, 'table.js'))
         shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'),
         path.join(covoar_result_dir, 'covoar.css'))
-        log.notice("Coverage run for " + set_name + " finished ")
         status = "success"
         if (exit_code[0] != 0):
             status = "failure. Error code: " + str(exit_code[0])
