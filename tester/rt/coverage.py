@@ -32,11 +32,12 @@ from rtemstoolkit import path
 from rtemstoolkit import log
 from rtemstoolkit import execute
 from rtemstoolkit import macros
-import shutil
-import os
+
 from datetime import datetime
 
 import options
+import shutil
+import os
 
 class summary:
     def __init__(self, p_summary_dir):
@@ -56,23 +57,34 @@ class summary:
 
     def parse(self):
         if(not path.exists(self.summary_file_path)):
-            log.warning("Summary file " + self.summary_file_path + " does not exist!")
+            log.warning("Summary file " + self.summary_file_path 
+            + " does not exist!")
             self.is_failure = True
             return
 
         summary_file = open(self.summary_file_path,'r')
-        self.bytes_analyzed = self._get_value_from_next_line_with_colon(summary_file)
-        self.bytes_not_executed = self._get_value_from_next_line_with_colon(summary_file)
-        self.percentage_executed = self._get_value_from_next_line_with_colon(summary_file)
-        self.percentage_not_executed = self._get_value_from_next_line_with_colon(summary_file)
-        self.ranges_uncovered = self._get_value_from_next_line_with_colon(summary_file)
-        self.branches_total = self._get_value_from_next_line_with_colon(summary_file)
-        self.branches_uncovered = self._get_value_from_next_line_with_colon(summary_file)
-        self.branches_always_taken = self._get_value_from_next_line_without_colon(summary_file)
-        self.branches_never_taken = self._get_value_from_next_line_without_colon(summary_file)
+        self.bytes_analyzed = self._get_value_from_next_line_with_colon(
+        summary_file)
+        self.bytes_not_executed = self._get_value_from_next_line_with_colon(
+        summary_file)
+        self.percentage_executed = self._get_value_from_next_line_with_colon(
+        summary_file)
+        self.percentage_not_executed = self._get_value_from_next_line_with_colon(
+        summary_file)
+        self.ranges_uncovered = self._get_value_from_next_line_with_colon(
+        summary_file)
+        self.branches_total = self._get_value_from_next_line_with_colon(
+        summary_file)
+        self.branches_uncovered = self._get_value_from_next_line_with_colon(
+        summary_file)
+        self.branches_always_taken = self._get_value_from_next_line_without_colon(
+        summary_file)
+        self.branches_never_taken = self._get_value_from_next_line_without_colon(
+        summary_file)
         summary_file.close()
         if not self.branches_uncovered == '' and not self.branches_total == '':
-            self.percentage_branches_covered = 1 - float(self.branches_uncovered) / float(self.branches_total)
+            self.percentage_branches_covered = 1 - (
+            float(self.branches_uncovered) / float(self.branches_total))
         else:
             self.percentage_branches_covered = 0.0
         return
@@ -111,7 +123,6 @@ class report_gen:
             progress[value] {
               -webkit-appearance: none;
                appearance: none;
-
               width: 150px;
               height: 15px;
             }
@@ -134,7 +145,8 @@ class report_gen:
         row = "<tr>"
         row += "<td>" + symbol_set + "</td>"
         if summary.is_failure:
-            row += ' <td colspan="' + str(self.number_of_columns-1) + '" style="background-color:red">FAILURE</td>'
+            row += ' <td colspan="' + str(self.number_of_columns-1) 
+            (+ '" style="background-color:red">FAILURE</td>')
         else:
             row += " <td>" + self._link(summary.index_file_path,"Index") + "</td>"
             row += " <td>" + self._link(summary.summary_file_path,"Summary") + "</td>"
@@ -225,7 +237,9 @@ class symbols_configuration(object):
                             log.stderr(lib + "\n")
                             self.symbol_sets[-1].libs.append(lib)
                         else:
-                            log.stderr("Invalid key : " + key + " in symbol set configuration file " + symbol_set_config_file)
+                            log.stderr("Invalid key : " + key 
+                            + " in symbol set configuration file " 
+                            + symbol_set_config_file)
                     else:
                         self._log_invalid_format()
             except:
@@ -265,7 +279,8 @@ class symbol_set(object):
         f.close()
 
 class gcnos(object):
-    def create_gcnos_file(self, gcnos_config_file_path, gcnos_file_path, path_to_build_dir):
+    def create_gcnos_file(self, gcnos_config_file_path, gcnos_file_path,
+    path_to_build_dir):
         with open(gcnos_file_path, 'w') as gcnos_file:
             with open(gcnos_config_file_path, 'r') as config_file:
                 for line in config_file:
@@ -276,7 +291,6 @@ class covoar(object):
     '''
     Covoar runner
     '''
-
     def __init__(self, base_result_dir, config_dir, traces_dir, covoar_src_dir):
         self.base_result_dir = base_result_dir
         self.config_dir = config_dir
@@ -285,26 +299,25 @@ class covoar(object):
 
     def run(self, set_name, covoar_config_file, symbol_file, gcnos_file):
         covoar_result_dir = path.join(self.base_result_dir, set_name)
-
         if (not path.exists(covoar_result_dir)):
             path.mkdir(covoar_result_dir)
-
         if (not path.exists(symbol_file)):
-            log.stderr("Symbol set file: " + symbol_file + " doesn't exists! Covoar can not be run!")
+            log.stderr("Symbol set file: " + symbol_file 
+            + " doesn't exists! Covoar can not be run!")
             log.stderr("Skipping " + set_name)
             return
-
-        command = "covoar -C" + covoar_config_file + " -S " + symbol_file + " -O " + covoar_result_dir + " " + path.join(self.traces_dir, "*.exe")
+        command = ("covoar -C" + covoar_config_file + " -S " + symbol_file 
+        + " -O " + covoar_result_dir + " " + path.join(self.traces_dir, "*.exe"))
         if (path.exists(gcnos_file)):
             command = command + " -g " + gcnos_file
         log.notice("Running covoar for " + set_name, stdout_only=True)
         log.notice(command, stdout_only=True)
         executor = execute.execute(verbose=True, output=output_handler)
         exit_code = executor.shell(command, cwd=os.getcwd())
-         
-        shutil.copy2(path.join(self.covoar_src_dir, 'table.js'), path.join(covoar_result_dir, 'table.js'))
-        shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'), path.join(covoar_result_dir, 'covoar.css'))
-         
+        shutil.copy2(path.join(self.covoar_src_dir, 'table.js'),
+        path.join(covoar_result_dir, 'table.js'))
+        shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'),
+        path.join(covoar_result_dir, 'covoar.css'))
         log.notice("Coverage run for " + set_name + " finished ")
         status = "success"
         if (exit_code[0] != 0):
@@ -316,7 +329,6 @@ class coverage_run(object):
     '''
     Coverage analysis support for rtems-test
     '''
-
     def __init__(self, p_macros, path_to_builddir):
         '''
         Constructor
@@ -327,7 +339,8 @@ class coverage_run(object):
         self.rtdir = path.abspath(self.macros['_rtdir'])
         self.rtscripts = self.macros.expand(self.macros['_rtscripts'])
         self.coverage_config_path = path.join(self.rtscripts, "coverage")
-        self.symbol_config_path = path.join(self.coverage_config_path, "symbol_sets.cfg")
+        self.symbol_config_path = path.join(
+        self.coverage_config_path,"symbol_sets.cfg")
         self.traces_dir = path.join(self.target_dir, 'coverage')
         self.config_map = self.macros.macros['coverage']
         self.executables = None
@@ -337,7 +350,7 @@ class coverage_run(object):
 
     def prepare_environment(self):
         if(path.exists(self.traces_dir)):
-            path.removeall(self.traces_dir)
+           path.removeall(self.traces_dir)
         path.mkdir(self.traces_dir)
         log.notice("Coverage environment prepared", stdout_only = True)
 
@@ -345,10 +358,14 @@ class coverage_run(object):
         ccf = open(covoar_config_file, 'w')
         ccf.write("format = " + self.config_map['format'][2] + '\n')
         ccf.write("target = " + self.config_map['target'][2] + '\n')
-        ccf.write("explanations = " + self.macros.expand(self.config_map['explanations'][2]) + '\n')
-        ccf.write("coverageExtension = " + self.config_map['coverage_extension'][2] + '\n')
-#        ccf.write("gcnosFile = " + self.macros.expand(self.config_map['gcnos_file'][2]) + '\n')
-        ccf.write("executableExtension = " + self.config_map['executable_extension'][2] + '\n')
+        ccf.write("explanations = " 
+        + self.macros.expand(self.config_map['explanations'][2]) + '\n')
+        ccf.write("coverageExtension = " 
+        + self.config_map['coverage_extension'][2] + '\n')
+#        ccf.write("gcnosFile = " 
+#        + self.macros.expand(self.config_map['gcnos_file'][2]) + '\n')
+        ccf.write("executableExtension = " 
+        + self.config_map['executable_extension'][2] + '\n')
         ccf.write("projectName = " + self.config_map['project_name'][2] + '\n')
         ccf.close()
 
@@ -357,49 +374,51 @@ class coverage_run(object):
             log.stderr("ERROR: Executables for coverage analysis unspecified!")
             raise Exception('Executable for coverage analysis unspecified')
         if self.config_map == None:
-            log.stderr("ERROR: Configuration map for coverage analysis unspecified!")
-            raise Exception("ERROR: Configuration map for coverage analysis unspecified!")
-
+            log.stderr(
+            "ERROR: Configuration map for coverage analysis unspecified!")
+            raise Exception(
+            "ERROR: Configuration map for coverage analysis unspecified!")
         covoar_config_file = path.join(self.traces_dir, 'config')
         self.write_covoar_config(covoar_config_file)
         if(not path.exists(covoar_config_file)):
-            log.stderr("Covoar configuration file: " + path.abspath(covoar_config_file) + " doesn't exists! Covoar can not be run! ");
+            log.stderr("Covoar configuration file: " 
+            + path.abspath(covoar_config_file) 
+            + " doesn't exists! Covoar can not be run! ");
             return -1
-
         self._link_executables()
-
         symbol_config = symbols_configuration()
         symbol_config.load(self.symbol_config_path, self.path_to_builddir)
         # Create gcnos_configuration
         # load paths to gcno files, join paths with path_to_builddir
         # write gcnos file to traces dir
         gcnos_file = path.join(self.traces_dir, "rtems.gcnos") 
-#        gcnos().create_gcnos_file(self.gcnos_file_path, gcnos_file, self.path_to_builddir)
-
+#        gcnos().create_gcnos_file(
+#        self.gcnos_file_path, gcnos_file, self.path_to_builddir)
         for sset in symbol_config.symbol_sets:
             if sset.is_valid():
                 symbol_set_file = path.join(self.traces_dir, sset.name + ".symcfg")
                 sset.write_set_file(symbol_set_file)
                 self.symbol_sets.append(sset.name)
-
-                covoar_run = covoar(self.test_dir, self.symbol_config_path, self.traces_dir, path.join(self.rtdir, 'covoar'))
-                covoar_run.run(sset.name, covoar_config_file, symbol_set_file, gcnos_file)
+                covoar_run = covoar(self.test_dir, self.symbol_config_path,
+                self.traces_dir, path.join(self.rtdir, 'covoar'))
+                covoar_run.run(sset.name, covoar_config_file, symbol_set_file,
+                gcnos_file)
             else:
-                log.stderr("Invalid symbol set " + sset.name + ". Skipping covoar run.")
-
+                log.stderr("Invalid symbol set " + sset.name 
+                + ". Skipping covoar run.")
         self._generate_reports();
         self._cleanup();
         self._summarize();
 
     def _link_executables(self):
         log.notice("Linking executables to " + self.traces_dir)
-
         for exe in self.executables:
             dst = path.join(self.traces_dir, path.basename(exe))
             try:
                 os.link(exe, dst)
             except OSError, e:
-                log.stderr("creating hardlink from " + path.abspath(exe) + " to " + dst + " failed!")
+                log.stderr("creating hardlink from " + path.abspath(exe) + " to " 
+                + dst + " failed!")
                 raise
         log.notice("Symlinks made")
 
@@ -413,14 +432,15 @@ class coverage_run(object):
         #path.removeall(self.traces_dir)
 
     def _summarize(self):
-        log.notice("Coverage analysis finished. You can find results in " + self.target_dir)
+        log.notice("Coverage analysis finished. You can find results in " 
+        + self.target_dir)
 
 def output_handler(text):
     log.notice(text, stdout_only = False)
 
 if __name__ == "__main__":
     print "coverage main"
-    c = coverage_run("/home/hf/coverage_test_leon2","/home/hf/development/rtems/src/rtems-tools/tester")
+    c = coverage_run("/home/cpod/coverage_test/leon3","/home/cpod/development/rtems/test/rtems-tools/tester")
     c.prepare_environment()
-    c.executables = ["/home/hf/development/rtems/src/b-leon2/sparc-rtems4.11/c/leon2/testsuites/samples/hello/hello.ralf"]
+    c.executables = ["/home/cpod/development/rtems/leon3/sparc-rtems4.12/c/leon3/testsuites/samples/hello/hello.ralf"]
     c.run()
