@@ -346,6 +346,7 @@ class coverage_run(object):
         self.executables = None
         self.symbol_sets = []
         self.path_to_builddir= path_to_builddir
+        self.no_clean = int(self.macros['_no_clean'])
 #        self.gcnos_file_path = path.join(self.coverage_config_path, "rtems.gcnos")
 
     def prepare_environment(self):
@@ -428,8 +429,9 @@ class coverage_run(object):
         report.generate()
 
     def _cleanup(self):
-        log.notice("Cleaning workspace up")
-        #path.removeall(self.traces_dir)
+        if not self.no_clean:
+            log.notice("Cleaning workspace up")
+            path.removeall(self.traces_dir)
 
     def _summarize(self):
         log.notice("Coverage analysis finished. You can find results in " 
