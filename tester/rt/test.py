@@ -294,15 +294,15 @@ def run(command_path = None):
 
         path_to_builddir= opts.find_arg('--rtems-builddir')
         if not path_to_builddir:
-            raise error.general("Path to build directory not provided")
+            raise error.general('Path to build directory not provided')
         coverage_enabled = opts.coverage()
         if coverage_enabled:
             import coverage
             from rtemstoolkit import check
-            log.notice("Coverage analysis requested")
+            log.notice('Coverage analysis requested')
             opts.defaults.load('%%{_configdir}/coverage.mc')
             if not check.check_exe('__covoar', opts.defaults['__covoar']):
-                raise error.general("Covoar not found!")
+                raise error.general('Covoar not found!')
             coverage = coverage.coverage_run(opts.defaults, path_to_builddir[1])
             coverage.prepare_environment();
         report_mode = opts.find_arg('--report-mode')

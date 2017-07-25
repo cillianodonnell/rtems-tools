@@ -15,7 +15,7 @@
 # this list of conditions and the following disclaimer in the documentation
 # and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 # ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
@@ -28,6 +28,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+from rtemstoolkit import error
 from rtemstoolkit import path
 from rtemstoolkit import log
 from rtemstoolkit import execute
@@ -41,8 +42,8 @@ import os
 
 class summary:
     def __init__(self, p_summary_dir):
-        self.summary_file_path = path.join(p_summary_dir, "summary.txt")
-        self.index_file_path = path.join(p_summary_dir, "index.html")
+        self.summary_file_path = path.join(p_summary_dir, 'summary.txt')
+        self.index_file_path = path.join(p_summary_dir, 'index.html')
         self.bytes_analyzed = 0
         self.bytes_not_executed = 0
         self.percentage_executed = 0.0
@@ -57,8 +58,7 @@ class summary:
 
     def parse(self):
         if(not path.exists(self.summary_file_path)):
-            log.warning("Summary file " + self.summary_file_path 
-            + " does not exist!")
+            raise error.general('Summary file %s does not exist!' % (self.summary_file_path)) 
             self.is_failure = True
             return
 
@@ -123,6 +123,7 @@ class report_gen:
             progress[value] {
               -webkit-appearance: none;
                appearance: none;
+
               width: 150px;
               height: 15px;
             }
@@ -145,8 +146,7 @@ class report_gen:
         row = "<tr>"
         row += "<td>" + symbol_set + "</td>"
         if summary.is_failure:
-            row += ' <td colspan="' + str(self.number_of_columns-1) 
-            (+ '" style="background-color:red">FAILURE</td>')
+            row += ' <td colspan="' + str(self.number_of_columns-1) + '" style="background-color:red">FAILURE</td>'
         else:
             row += " <td>" + self._link(summary.index_file_path,"Index") + "</td>"
             row += " <td>" + self._link(summary.summary_file_path,"Summary") + "</td>"
@@ -198,7 +198,6 @@ class report_gen:
         head_section = self._prepare_head_section()
         index_content = self._prepare_index_content(partial_reports)
         self._create_index_file(head_section,index_content)
-#         _create_summary_file(summary_content)
 
 class symbols_configuration(object):
     '''
@@ -208,8 +207,8 @@ class symbols_configuration(object):
         self.symbol_sets = []
 
     def _log_invalid_format(self):
-        log.stderr("Invalid symbol configuration file")
-        log.stderr(''' Configuration file format:
+        raise error.general(''' Invalid symbol configuration file.
+        Configuration file format:
                 symbolset:
                    name=SYMBOLSET_NAME
                    lib=PATH_TO_LIBRARY_1
@@ -222,24 +221,20 @@ class symbols_configuration(object):
         scf = open(symbol_set_config_file, 'r')
         for line in scf:
             try:
-                if line.strip().startswith("symbolset"):
-                    self.symbol_sets.append(symbol_set("",[]))
+                if line.strip().startswith('symbolset'):
+                    self.symbol_sets.append(symbol_set('',[]))
                 else:
                     splitted = line.split('=')
                     if(len(splitted) == 2):
                         key = splitted[0].strip()
                         value = splitted[1].strip()
-
                         if key == 'name':
                             self.symbol_sets[-1].name = value
                         elif key == 'lib':
                             lib = os.path.join(path_to_builddir, value)
-                            log.stderr(lib + "\n")
                             self.symbol_sets[-1].libs.append(lib)
                         else:
-                            log.stderr("Invalid key : " + key 
-                            + " in symbol set configuration file " 
-                            + symbol_set_config_file)
+                            raise error.general('Invalid key : %s in symbol set configuration file ' % (key, symbol_set_config_file))
                     else:
                         self._log_invalid_format()
             except:
@@ -259,23 +254,20 @@ class symbol_set(object):
 
     def is_valid(self):
         if len(self.name) == 0:
-            log.stderr("Invalid symbol set. Symbol set must have name! ")
-            return False
+            raise error.general('Invalid symbol set. Symbol set must have name!')
         if len(self.libs) == 0:
-            log.stderr("Invalid symbol set. Symbol set must have specified libraries!")
-            return False
+            raise error.general('Invalid symbol set. Symbol set must have specified libraries!')
         for lib in self.libs:
             if not path.exists(lib):
-                log.stderr("Invalid library path: " + lib)
-                return False
+                raise error.general('Invalid library path: %s' % (lib))
         return True
 
     def write_set_file(self, path):
         f = open(path, 'w')
-        f.write("symbolset:\n")
-        f.write("\t name=" + self.name + '\n')
+        f.write('symbolset:\n')
+        f.write('\t name=' + self.name + '\n')
         for lib in self.libs:
-            f.write("\t lib=" + lib + '\n')
+            f.write('\t lib=' + lib + '\n')
         f.close()
 
 class gcnos(object):
@@ -302,27 +294,24 @@ class covoar(object):
         if (not path.exists(covoar_result_dir)):
             path.mkdir(covoar_result_dir)
         if (not path.exists(symbol_file)):
-            log.stderr("Symbol set file: " + symbol_file 
-            + " doesn't exists! Covoar can not be run!")
-            log.stderr("Skipping " + set_name)
+            raise error.general('Symbol set file: %s does not exist! Covoar can not be run! Skipping ' % (symbol_file, set_name))
             return
-        command = ("covoar -C" + covoar_config_file + " -S " + symbol_file 
-        + " -O " + covoar_result_dir + " " + path.join(self.traces_dir, "*.exe"))
+        command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file 
+        + ' -O ' + covoar_result_dir + ' ' + path.join(self.traces_dir, '*.exe'))
         if (path.exists(gcnos_file)):
-            command = command + " -g " + gcnos_file
-        log.notice("Running covoar for " + set_name, stdout_only=True)
-        log.notice(command, stdout_only=True)
+            command = command + ' -g ' + gcnos_file
+        log.notice('Running covoar for %s' % (set_name))
+#        log.notice('%s' % (command))
         executor = execute.execute(verbose=True, output=output_handler)
         exit_code = executor.shell(command, cwd=os.getcwd())
         shutil.copy2(path.join(self.covoar_src_dir, 'table.js'),
         path.join(covoar_result_dir, 'table.js'))
         shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'),
         path.join(covoar_result_dir, 'covoar.css'))
-        status = "success"
         if (exit_code[0] != 0):
-            status = "failure. Error code: " + str(exit_code[0])
-        log.notice("Coverage run for " + set_name + " finished " + status)
-        log.notice("-----------------------------------------------")
+            raise error.general('Failure. Error code: %s' % (str(exit_code[0])))
+        log.notice('Coverage run for %s finished successfully.' % (set_name))
+        log.notice('-----------------------------------------------')
 
 class coverage_run(object):
     '''
@@ -334,56 +323,53 @@ class coverage_run(object):
         '''
         self.macros = p_macros
         self.target_dir = self.macros['_cwd']
-        self.test_dir = path.join(self.target_dir, "test")
+        self.test_dir = path.join(self.target_dir, 'test')
         self.rtdir = path.abspath(self.macros['_rtdir'])
         self.rtscripts = self.macros.expand(self.macros['_rtscripts'])
-        self.coverage_config_path = path.join(self.rtscripts, "coverage")
+        self.coverage_config_path = path.join(self.rtscripts, 'coverage')
         self.symbol_config_path = path.join(
-        self.coverage_config_path,"symbol_sets.cfg")
+        self.coverage_config_path,'symbol_sets.cfg')
         self.traces_dir = path.join(self.target_dir, 'coverage')
         self.config_map = self.macros.macros['coverage']
         self.executables = None
         self.symbol_sets = []
         self.path_to_builddir= path_to_builddir
         self.no_clean = int(self.macros['_no_clean'])
-#        self.gcnos_file_path = path.join(self.coverage_config_path, "rtems.gcnos")
+#        self.gcnos_file_path = path.join(self.coverage_config_path, 'rtems.gcnos')
 
     def prepare_environment(self):
         if(path.exists(self.traces_dir)):
            path.removeall(self.traces_dir)
         path.mkdir(self.traces_dir)
-        log.notice("Coverage environment prepared", stdout_only = True)
+        log.notice('Coverage environment prepared')
 
     def write_covoar_config(self, covoar_config_file):
         ccf = open(covoar_config_file, 'w')
-        ccf.write("format = " + self.config_map['format'][2] + '\n')
-        ccf.write("target = " + self.config_map['target'][2] + '\n')
-        ccf.write("explanations = " 
+        ccf.write('format = ' + self.config_map['format'][2] + '\n')
+        ccf.write('target = ' + self.config_map['target'][2] + '\n')
+        ccf.write('explanations = ' 
         + self.macros.expand(self.config_map['explanations'][2]) + '\n')
-        ccf.write("coverageExtension = " 
+        ccf.write('coverageExtension = ' 
         + self.config_map['coverage_extension'][2] + '\n')
-#        ccf.write("gcnosFile = " 
+#        ccf.write('gcnosFile = ' 
 #        + self.macros.expand(self.config_map['gcnos_file'][2]) + '\n')
-        ccf.write("executableExtension = " 
+        ccf.write('executableExtension = ' 
         + self.config_map['executable_extension'][2] + '\n')
-        ccf.write("projectName = " + self.config_map['project_name'][2] + '\n')
+        ccf.write('projectName = ' + self.config_map['project_name'][2] + '\n')
         ccf.close()
 
     def run(self):
         if self.executables == None:
-            log.stderr("ERROR: Executables for coverage analysis unspecified!")
+            raise error.general('ERROR: Executables for coverage analysis unspecified!')
             raise Exception('Executable for coverage analysis unspecified')
         if self.config_map == None:
-            log.stderr(
-            "ERROR: Configuration map for coverage analysis unspecified!")
+            raise error.general('ERROR: Configuration map for coverage analysis unspecified!')
             raise Exception(
-            "ERROR: Configuration map for coverage analysis unspecified!")
+            'ERROR: Configuration map for coverage analysis unspecified!')
         covoar_config_file = path.join(self.traces_dir, 'config')
         self.write_covoar_config(covoar_config_file)
         if(not path.exists(covoar_config_file)):
-            log.stderr("Covoar configuration file: " 
-            + path.abspath(covoar_config_file) 
-            + " doesn't exists! Covoar can not be run! ");
+            raise error.general('Covoar configuration file: %s does not exist' % (path.abspath(covoar_config_file))) 
             return -1
         self._link_executables()
         symbol_config = symbols_configuration()
@@ -391,12 +377,12 @@ class coverage_run(object):
         # Create gcnos_configuration
         # load paths to gcno files, join paths with path_to_builddir
         # write gcnos file to traces dir
-        gcnos_file = path.join(self.traces_dir, "rtems.gcnos") 
+        gcnos_file = path.join(self.traces_dir, 'rtems.gcnos') 
 #        gcnos().create_gcnos_file(
 #        self.gcnos_file_path, gcnos_file, self.path_to_builddir)
         for sset in symbol_config.symbol_sets:
             if sset.is_valid():
-                symbol_set_file = path.join(self.traces_dir, sset.name + ".symcfg")
+                symbol_set_file = path.join(self.traces_dir, sset.name + '.symcfg')
                 sset.write_set_file(symbol_set_file)
                 self.symbol_sets.append(sset.name)
                 covoar_run = covoar(self.test_dir, self.symbol_config_path,
@@ -404,37 +390,33 @@ class coverage_run(object):
                 covoar_run.run(sset.name, covoar_config_file, symbol_set_file,
                 gcnos_file)
             else:
-                log.stderr("Invalid symbol set " + sset.name 
-                + ". Skipping covoar run.")
+                raise error.general('Invalid symbol set %s. Skipping covoar run.' % (sset.name))
         self._generate_reports();
         self._cleanup();
         self._summarize();
 
     def _link_executables(self):
-        log.notice("Linking executables to " + self.traces_dir)
+        log.notice('Linking executables to %s' % (self.traces_dir))
         for exe in self.executables:
             dst = path.join(self.traces_dir, path.basename(exe))
             try:
                 os.link(exe, dst)
             except OSError, e:
-                log.stderr("creating hardlink from " + path.abspath(exe) + " to " 
-                + dst + " failed!")
-                raise
-        log.notice("Symlinks made")
+                raise error.general('creating hardlink from %s to %s failed!' % (path.abspath(exe), dst))
+        log.notice('Symlinks made')
 
     def _generate_reports(self):
-        log.notice("Generating reports")
+        log.notice('Generating reports')
         report = report_gen(self.symbol_sets, self.target_dir)
         report.generate()
 
     def _cleanup(self):
         if not self.no_clean:
-            log.notice("Cleaning workspace up")
+            log.notice('Cleaning workspace up')
             path.removeall(self.traces_dir)
 
     def _summarize(self):
-        log.notice("Coverage analysis finished. You can find results in " 
-        + self.target_dir)
+        log.notice('Coverage analysis finished. You can find results in %s' % (self.target_dir))
 
 def output_handler(text):
-    log.notice(text, stdout_only = False)
+    log.notice('%s' % (text))
