@@ -247,6 +247,7 @@ def run(command_path = None):
                     '--filter':      'Glob that executables must match to run (default: ' +
                               default_exefilter + ')',
                     '--stacktrace':  'Dump a stack trace on a user termination (^C)',
+                    '--coverage':    'Perform coverage analysis of test exectuables.',
                     '--rtems-builddir': 'The path to the build directory.'}
         opts = options.load(sys.argv,
                             optargs = optargs,
@@ -292,10 +293,10 @@ def run(command_path = None):
             raise error.general('BSP script not found: %s' % (bsp))
         bsp_config = opts.defaults.expand(opts.defaults[bsp])
 
-        path_to_builddir= opts.find_arg('--rtems-builddir')
+        path_to_builddir = opts.find_arg('--rtems-builddir')
         if not path_to_builddir:
             raise error.general('Path to build directory not provided')
-        coverage_enabled = opts.coverage()
+        coverage_enabled = opts.find_arg('--coverage')
         if coverage_enabled:
             import coverage
             from rtemstoolkit import check
