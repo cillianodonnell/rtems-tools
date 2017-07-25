@@ -43,7 +43,6 @@ namespace Gcov {
     char*		tempString2;
     char*		tempString3;
 
-    fprintf(stdout, "filename: %s\n", fileName);
     if ( strlen(fileName) >= FILE_NAME_LENGTH ){
       fprintf(
           stderr,
@@ -71,7 +70,7 @@ namespace Gcov {
     }
 
     // Debug message
-    fprintf( stderr, "Reading file: %s\n",  gcnoFileName);
+    //fprintf( stderr, "Reading file: %s\n",  gcnoFileName);
 
     // Open the notes file.
     gcovFile = fopen( gcnoFileName, "r" );
@@ -87,20 +86,12 @@ namespace Gcov {
       fclose( gcovFile );
       return false;
     }
-    else 
-    {
-      fprintf( stdout, "Successfully read file preamble for %s.\n", gcnoFileName);
-      fprintf( stdout, "MAGIC: %u\n", gcnoPreamble.magic );
-      fprintf( stdout, "VERSION: %u\n", gcnoPreamble.version );
-      fprintf( stdout, "TIMESTAMP: %u\n", gcnoPreamble.timestamp );
-    }
     //Read all remaining frames from file
     while( readFrame(gcovFile) ){}
 
     fclose( gcovFile );
     return true;
   }
-
 
   bool GcovData::writeGcdaFile ()
   {
@@ -205,7 +196,6 @@ namespace Gcov {
     status = fwrite (&objectStats, sizeof( objectStats ), 1, gcdaFile );
     if ( status != 1 )
       fprintf( stderr, "Error while writing object stats to a file %s\n", gcdaFileName );
-
 
     // Prepare frame with program statistics
     header.tag = GCOV_TAG_PROGRAM_SUMMARY;
@@ -371,7 +361,7 @@ namespace Gcov {
       return -1;
     }
 
-    fprintf( stdout, "Succesfully read frame header with \n \
+    //fprintf( stdout, "Succesfully read frame header with \n \
         TAG: %u\n \
         LENGTH: %u \n", header->tag, header->length); 
       return length / 4; // Why x/4 ?
@@ -492,21 +482,10 @@ namespace Gcov {
     char        path[512];
     char        command[512];
     char        source_file_name[512];
-    fprintf (stderr, "Attempting to run gcov for: %s\n", cFileName );
+    //fprintf (stderr, "Attempting to run gcov for: %s\n", cFileName );
     strcpy( path, cFileName );
     dirname( path );
     char* target_file_name = basename( cFileName );
-    
-    //if ( strstr( path, "rtems") )
-    //{
-    //  strncpy(source_file_name, target_file_name + 11, strlen(target_file_name) - 11);
-    //  sprintf( command, "cp /home/hf/development/rtems/src/rtems/cpukit/%s/src/%s /home/hf/development/rtems/b-pc386/i386-rtems4.11/c/pc386/cpukit/rtems/src/%s", "rtems", source_file_name, target_file_name);
-    //}
-    
-    //fprintf (stderr, "> %s\n", command );
-    //system( command );
-    //memset(&command, 0, sizeof(command));
-
     sprintf( command, "( cd %s && gcov %s &>> gcov.log)", path, target_file_name);
     fprintf (stderr, "> %s\n", command );
     system( command );
