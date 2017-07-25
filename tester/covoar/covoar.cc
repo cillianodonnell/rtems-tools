@@ -460,7 +460,7 @@ int main(
   //
   // Generate Gcov reports
   //
-  if (Verbose)
+/*  if (Verbose)
     fprintf( stderr, "Generating Gcov reports...\n");
   gcnosFile = fopen ( gcnosFileName , "r" );
 
@@ -486,7 +486,7 @@ int main(
       delete gcovFile;
     }
   fclose( gcnosFile );
-  }
+  }*/
 
   // Determine the uncovered ranges and branches.
   if (Verbose)

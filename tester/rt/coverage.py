@@ -270,14 +270,14 @@ class symbol_set(object):
             f.write('\t lib=' + lib + '\n')
         f.close()
 
-class gcnos(object):
-    def create_gcnos_file(self, gcnos_config_file_path, gcnos_file_path,
-    path_to_build_dir):
-        with open(gcnos_file_path, 'w') as gcnos_file:
-            with open(gcnos_config_file_path, 'r') as config_file:
-                for line in config_file:
-                    if line.strip():
-                        gcnos_file.write(path.join(path_to_build_dir, line))
+#class gcnos(object):
+#    def create_gcnos_file(self, gcnos_config_file_path, gcnos_file_path,
+#    path_to_build_dir):
+#        with open(gcnos_file_path, 'w') as gcnos_file:
+#            with open(gcnos_config_file_path, 'r') as config_file:
+#                for line in config_file:
+#                    if line.strip():
+#                        gcnos_file.write(path.join(path_to_build_dir, line))
 
 class covoar(object):
     '''
@@ -289,7 +289,7 @@ class covoar(object):
         self.traces_dir = traces_dir
         self.covoar_src_dir = covoar_src_dir
 
-    def run(self, set_name, covoar_config_file, symbol_file, gcnos_file):
+    def run(self, set_name, covoar_config_file, symbol_file):
         covoar_result_dir = path.join(self.base_result_dir, set_name)
         if (not path.exists(covoar_result_dir)):
             path.mkdir(covoar_result_dir)
@@ -298,8 +298,8 @@ class covoar(object):
             return
         command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file 
         + ' -O ' + covoar_result_dir + ' ' + path.join(self.traces_dir, '*.exe'))
-        if (path.exists(gcnos_file)):
-            command = command + ' -g ' + gcnos_file
+#        if (path.exists(gcnos_file)):
+#            command = command + ' -g ' + gcnos_file
         log.notice('Running covoar for %s' % (set_name))
 #        log.notice('%s' % (command))
         executor = execute.execute(verbose=True, output=output_handler)
@@ -377,7 +377,7 @@ class coverage_run(object):
         # Create gcnos_configuration
         # load paths to gcno files, join paths with path_to_builddir
         # write gcnos file to traces dir
-        gcnos_file = path.join(self.traces_dir, 'rtems.gcnos') 
+#        gcnos_file = path.join(self.traces_dir, 'rtems.gcnos') 
 #        gcnos().create_gcnos_file(
 #        self.gcnos_file_path, gcnos_file, self.path_to_builddir)
         for sset in symbol_config.symbol_sets:
@@ -387,8 +387,7 @@ class coverage_run(object):
                 self.symbol_sets.append(sset.name)
                 covoar_run = covoar(self.test_dir, self.symbol_config_path,
                 self.traces_dir, path.join(self.rtdir, 'covoar'))
-                covoar_run.run(sset.name, covoar_config_file, symbol_set_file,
-                gcnos_file)
+                covoar_run.run(sset.name, covoar_config_file, symbol_set_file)
             else:
                 raise error.general('Invalid symbol set %s. Skipping covoar run.' % (sset.name))
         self._generate_reports();

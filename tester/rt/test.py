@@ -247,7 +247,7 @@ def run(command_path = None):
                     '--filter':      'Glob that executables must match to run (default: ' +
                               default_exefilter + ')',
                     '--stacktrace':  'Dump a stack trace on a user termination (^C)',
-                    '--rtems-builddir': 'The path to the build directory ( including e.g. /b-leon2/ )'}
+                    '--rtems-builddir': 'The path to the build directory.'}
         opts = options.load(sys.argv,
                             optargs = optargs,
                             command_path = command_path)
