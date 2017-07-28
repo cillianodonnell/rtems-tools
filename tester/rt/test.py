@@ -292,7 +292,6 @@ def run(command_path = None):
         if not bsp_script:
             raise error.general('BSP script not found: %s' % (bsp))
         bsp_config = opts.defaults.expand(opts.defaults[bsp])
-
         path_to_builddir = opts.find_arg('--rtems-builddir')
         if not path_to_builddir:
             raise error.general('Path to build directory not provided')
