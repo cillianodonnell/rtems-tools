@@ -46,3 +46,4 @@
 #
 [global]
 __covoar:			exe,	required, 'covoar'
+_coverage:          none,   none,     '1'
