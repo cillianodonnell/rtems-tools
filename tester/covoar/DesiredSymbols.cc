@@ -362,7 +362,7 @@ namespace Coverage {
     if (itr->second.unifiedCoverageMap) {
 
       // ensure that the specified size matches the existing size.
-      if (itr->second.stats.sizeInBytes != size) {
+/*      if (itr->second.stats.sizeInBytes != size) {
 
         // Changed ERROR to INFO because size mismatch is not treated as error anymore. 
         // Set smallest size as size and continue. 
@@ -378,13 +378,13 @@ namespace Coverage {
           itr->second.stats.sizeInBytes,
           itr->second.sourceFile->getFileName().c_str(),
           size
-        );
+       );
+*/
         if ( itr->second.stats.sizeInBytes < size )
           itr->second.stats.sizeInBytes = size;
         else
           size = itr->second.stats.sizeInBytes;
         // exit( -1 );
-      }
     }
 
     // If we don't already have a coverage map, create one.
@@ -666,7 +666,7 @@ namespace Coverage {
     dMapSize = itr->second.stats.sizeInBytes;
     sBaseAddress = sourceCoverageMap->getFirstLowAddress();
     sMapSize = sourceCoverageMap->getSize();
-    if (dMapSize != sMapSize) {
+/*    if (dMapSize != sMapSize) {
 
       fprintf(
         stderr,
@@ -677,6 +677,7 @@ namespace Coverage {
       return;
       // exit( -1 );
     }
+*/
 
     // Merge the data for each address.
     destinationCoverageMap = itr->second.unifiedCoverageMap;
