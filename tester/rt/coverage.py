@@ -309,7 +309,7 @@ class covoar(object):
         shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'),
         path.join(covoar_result_dir, 'covoar.css'))
         if (exit_code[0] != 0):
-            raise error.general('Failure. Error code: %s' % (str(exit_code[0])))
+            raise error.general('Failure. Error code: %d' % (exit_code[0]))
         log.notice('Coverage run for %s finished successfully.' % (set_name))
         log.notice('-----------------------------------------------')
 
