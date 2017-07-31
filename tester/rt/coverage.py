@@ -361,11 +361,8 @@ class coverage_run(object):
     def run(self):
         if self.executables == None:
             raise error.general('ERROR: Executables for coverage analysis unspecified!')
-            raise Exception('Executable for coverage analysis unspecified')
         if self.config_map == None:
             raise error.general('ERROR: Configuration map for coverage analysis unspecified!')
-            raise Exception(
-            'ERROR: Configuration map for coverage analysis unspecified!')
         covoar_config_file = path.join(self.traces_dir, 'config')
         self.write_covoar_config(covoar_config_file)
         if(not path.exists(covoar_config_file)):
