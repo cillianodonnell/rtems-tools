@@ -63,24 +63,15 @@ class summary:
             return
 
         summary_file = open(self.summary_file_path,'r')
-        self.bytes_analyzed = self._get_value_from_next_line_with_colon(
-        summary_file)
-        self.bytes_not_executed = self._get_value_from_next_line_with_colon(
-        summary_file)
-        self.percentage_executed = self._get_value_from_next_line_with_colon(
-        summary_file)
-        self.percentage_not_executed = self._get_value_from_next_line_with_colon(
-        summary_file)
-        self.ranges_uncovered = self._get_value_from_next_line_with_colon(
-        summary_file)
-        self.branches_total = self._get_value_from_next_line_with_colon(
-        summary_file)
-        self.branches_uncovered = self._get_value_from_next_line_with_colon(
-        summary_file)
-        self.branches_always_taken = self._get_value_from_next_line_without_colon(
-        summary_file)
-        self.branches_never_taken = self._get_value_from_next_line_without_colon(
-        summary_file)
+        self.bytes_analyzed = self._get_next_with_colon(summary_file)
+        self.bytes_not_executed = self._get_next_with_colon(summary_file)
+        self.percentage_executed = self._get_next_with_colon(summary_file)
+        self.percentage_not_executed = self._get_next_with_colon(summary_file)
+        self.ranges_uncovered = self._get_next_with_colon(summary_file)
+        self.branches_total = self._get_next_with_colon(summary_file)
+        self.branches_uncovered = self._get_next_with_colon(summary_file)
+        self.branches_always_taken = self._get_next_without_colon(summary_file)
+        self.branches_never_taken = self._get_next_without_colon(summary_file)
         summary_file.close()
         if not self.branches_uncovered == '' and not self.branches_total == '':
             self.percentage_branches_covered = 1 - (
@@ -89,14 +80,14 @@ class summary:
             self.percentage_branches_covered = 0.0
         return
 
-    def _get_value_from_next_line_with_colon(self, summary_file):
+    def _get_next_with_colon(self, summary_file):
         line = summary_file.readline()
         if ':' in line:
             return line.split(':')[1].strip()
         else:
             return ''
 
-    def _get_value_from_next_line_without_colon(self, summary_file):
+    def _get_next_without_colon(self, summary_file):
         line = summary_file.readline()
         return line.strip().split(' ')[0]
 
