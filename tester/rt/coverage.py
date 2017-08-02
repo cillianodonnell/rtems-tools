@@ -74,8 +74,8 @@ class summary:
         self.branches_never_taken = self._get_next_without_colon(summary_file)
         summary_file.close()
         if not self.branches_uncovered == '' and not self.branches_total == '':
-            self.percentage_branches_covered = 1 - (
-            float(self.branches_uncovered) / float(self.branches_total))
+            self.percentage_branches_covered = \
+            1 - (float(self.branches_uncovered) / float(self.branches_total))
         else:
             self.percentage_branches_covered = 0.0
         return
@@ -137,16 +137,20 @@ class report_gen:
         row = "<tr>"
         row += "<td>" + symbol_set + "</td>"
         if summary.is_failure:
-            row += ' <td colspan="' + str(self.number_of_columns-1) + '" style="background-color:red">FAILURE</td>'
+            row += ' <td colspan="' + str(self.number_of_columns-1) \
+            + '" style="background-color:red">FAILURE</td>'
         else:
-            row += " <td>" + self._link(summary.index_file_path,"Index") + "</td>"
-            row += " <td>" + self._link(summary.summary_file_path,"Summary") + "</td>"
+            row += " <td>" + self._link(summary.index_file_path,"Index") \
+            + "</td>"
+            row += " <td>" + self._link(summary.summary_file_path,"Summary") \
+            + "</td>"
             row += " <td>" + summary.bytes_analyzed + "</td>"
             row += " <td>" + summary.bytes_not_executed + "</td>"
             row += " <td>" + summary.ranges_uncovered + "</td>"
             row += " <td>" + summary.percentage_executed + "%</td>"
             row += " <td>" + summary.percentage_not_executed + "%</td>"
-            row += ' <td><progress value="' + summary.percentage_executed + '" max="100"></progress></td>'
+            row += ' <td><progress value="' + summary.percentage_executed \
+            + '" max="100"></progress></td>'
             row += " <td>" + summary.branches_uncovered + "</td>"
             row += " <td>" + summary.branches_total + "</td>"
             row += " <td> {:.3%} </td>".format(summary.percentage_branches_covered)
@@ -287,12 +291,12 @@ class covoar(object):
         if (not path.exists(symbol_file)):
             raise error.general('Symbol set file: %s does not exist! Covoar can not be run! Skipping ' % (symbol_file, set_name))
             return
-        command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file 
-        + ' -O ' + covoar_result_dir + ' ' + path.join(self.traces_dir, '*.exe'))
+        command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file +
+        ' -O ' + covoar_result_dir + ' ' + path.join(self.traces_dir, '*.exe'))
 #        if (path.exists(gcnos_file)):
 #            command = command + ' -g ' + gcnos_file
-        log.notice('Running covoar for %s' % (set_name))
 #        log.notice('%s' % (command))
+        log.notice('Running covoar for %s' % (set_name))
         executor = execute.execute(verbose=True, output=output_handler)
         exit_code = executor.shell(command, cwd=os.getcwd())
         shutil.copy2(path.join(self.covoar_src_dir, 'table.js'),
@@ -370,7 +374,8 @@ class coverage_run(object):
 #        self.gcnos_file_path, gcnos_file, self.path_to_builddir)
         for sset in symbol_config.symbol_sets:
             if sset.is_valid():
-                symbol_set_file = path.join(self.traces_dir, sset.name + '.symcfg')
+                symbol_set_file = path.join(self.traces_dir, sset.name 
+                + '.symcfg')
                 sset.write_set_file(symbol_set_file)
                 self.symbol_sets.append(sset.name)
                 covoar_run = covoar(self.test_dir, self.symbol_config_path,
