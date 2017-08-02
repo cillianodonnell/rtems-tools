@@ -58,7 +58,7 @@ class summary:
 
     def parse(self):
         if(not path.exists(self.summary_file_path)):
-            raise error.general('Summary file %s does not exist!' % (self.summary_file_path)) 
+            raise error.general('summary file %s does not exist!' % (self.summary_file_path)) 
             self.is_failure = True
             return
 
@@ -201,17 +201,6 @@ class symbols_configuration(object):
     def __init__(self):
         self.symbol_sets = []
 
-    def _log_invalid_format(self):
-        raise error.general(''' Invalid symbol configuration file.
-        Configuration file format:
-                symbolset:
-                   name=SYMBOLSET_NAME
-                   lib=PATH_TO_LIBRARY_1
-                   lib=PATH_TO_LIBRARY_2
-                symbolset:
-                    name=SYMBOLSET_NAME_N
-                    lib=PATH_TO_LIBRARY        ''')
-
     def load(self, symbol_set_config_file, path_to_builddir):
         scf = open(symbol_set_config_file, 'r')
         for line in scf:
@@ -229,11 +218,11 @@ class symbols_configuration(object):
                             lib = os.path.join(path_to_builddir, value)
                             self.symbol_sets[-1].libs.append(lib)
                         else:
-                            raise error.general('Invalid key : %s in symbol set configuration file ' % (key, symbol_set_config_file))
+                            raise error.general('invalid key: %s in symbol_sets.cfg' % (key, symbol_set_config_file))
                     else:
-                        self._log_invalid_format()
+                        raise error.general('invalid format in symbol_sets.cfg') 
             except:
-                self._log_invalid_format()
+                raise error.general('invalid format in symbol_sets.cfg') 
         scf.close()
 
     def save(self, path):
@@ -249,12 +238,13 @@ class symbol_set(object):
 
     def is_valid(self):
         if len(self.name) == 0:
-            raise error.general('Invalid symbol set. Symbol set must have name!')
+            raise error.general('symbol set has no name in symbol_sets.cfg')
         if len(self.libs) == 0:
-            raise error.general('Invalid symbol set. Symbol set must have specified libraries!')
+            raise error.general('symbol set contains no libraries to analyse in symbol_sets.cfg')
         for lib in self.libs:
             if not path.exists(lib):
-                raise error.general('Invalid library path: %s' % (lib))
+                log.notice('Invalid library path: %s in symbol_sets.cfg' % (lib))
+                return False
         return True
 
     def write_set_file(self, path):
@@ -289,7 +279,7 @@ class covoar(object):
         if (not path.exists(covoar_result_dir)):
             path.mkdir(covoar_result_dir)
         if (not path.exists(symbol_file)):
-            raise error.general('Symbol set file: %s does not exist! Covoar can not be run! Skipping ' % (symbol_file, set_name))
+            raise error.general('symbol set file: coverage/%s.symcfg was not created for covoar, skipping %s' % (symbol_file, set_name))
             return
         command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file +
         ' -O ' + covoar_result_dir + ' ' + path.join(self.traces_dir, '*.exe'))
@@ -299,12 +289,12 @@ class covoar(object):
         log.notice('Running covoar for %s' % (set_name))
         executor = execute.execute(verbose=True, output=output_handler)
         exit_code = executor.shell(command, cwd=os.getcwd())
+        if (exit_code[0] != 0):
+            raise error.general('failure. error code: %d' % (exit_code[0]))
         shutil.copy2(path.join(self.covoar_src_dir, 'table.js'),
         path.join(covoar_result_dir, 'table.js'))
         shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'),
         path.join(covoar_result_dir, 'covoar.css'))
-        if (exit_code[0] != 0):
-            raise error.general('Failure. Error code: %d' % (exit_code[0]))
         log.notice('Coverage run for %s finished successfully.' % (set_name))
         log.notice('-----------------------------------------------')
 
@@ -355,14 +345,14 @@ class coverage_run(object):
 
     def run(self):
         if self.executables == None:
-            raise error.general('ERROR: Executables for coverage analysis unspecified!')
+            raise error.general('no test executables provided.')
         if self.config_map == None:
-            raise error.general('ERROR: Configuration map for coverage analysis unspecified!')
+            raise error.general('no coverage configuration map specified in %s config file' % {bsp})
         covoar_config_file = path.join(self.traces_dir, 'config')
         self.write_covoar_config(covoar_config_file)
         if(not path.exists(covoar_config_file)):
-            raise error.general('Covoar configuration file: %s does not exist' % (path.abspath(covoar_config_file))) 
-            return -1
+            raise error.general('covoar configuration file: %s does not exist' % (path.abspath(covoar_config_file))) 
+            return False
         self._link_executables()
         symbol_config = symbols_configuration()
         symbol_config.load(self.symbol_config_path, self.path_to_builddir)
@@ -382,7 +372,7 @@ class coverage_run(object):
                 self.traces_dir, path.join(self.rtdir, 'covoar'))
                 covoar_run.run(sset.name, covoar_config_file, symbol_set_file)
             else:
-                raise error.general('Invalid symbol set %s. Skipping covoar run.' % (sset.name))
+                log.notice('Invalid symbol set %s in symbol_sets.cfg. skipping covoar run.' % (sset.name))
         self._generate_reports();
         self._cleanup();
         self._summarize();
@@ -404,7 +394,7 @@ class coverage_run(object):
 
     def _cleanup(self):
         if not self.no_clean:
-            log.notice('Cleaning workspace up')
+            log.notice('Cleaning workspace.')
             path.removeall(self.traces_dir)
 
     def _summarize(self):
