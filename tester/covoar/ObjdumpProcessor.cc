@@ -443,44 +443,12 @@ namespace Coverage {
         // See if it is the dump of an instruction.
         items = sscanf(
           inputBuffer,
-          "%x%c\t%*[^\t]%c%*[^<]%s",
-          &instructionOffset, &terminator1, &terminator2, symbol
+          "%x%c\t%*[^\t]%c",
+          &instructionOffset, &terminator1, &terminator2
         );
 
-        std::string jumpTableCheck = symbol;
-
-        // Add check to remove jump table from end of method.
-        if (jumpTableCheck.find("__end") != std::string::npos) {
-
-          endAddress = executableInformation->getLoadAddress() + offset - 1;
-
-          // If we are currently processing a symbol, finalize it.
-         if (processSymbol) {
-           finalizeSymbol(
-             executableInformation,
-             currentSymbol,
-             startAddress,
-             endAddress,
-             theInstructions
-           );
-         }
-
-         // Start processing of a new symbol.
-         startAddress = 0;
-         currentSymbol = "";
-         processSymbol = false;
-         theInstructions.clear();
-
-         // See if the new symbol is one that we care about.
-         if (SymbolsToAnalyze->isDesired( symbol )) {
-           startAddress = executableInformation->getLoadAddress() + offset;
-           currentSymbol = symbol;
-           processSymbol = true;
-           theInstructions.push_back( lineInfo );
-         }
-       }
         // If it looks like an instruction ...
-        else if ((items == 3) && (terminator1 == ':') && (terminator2 == '\t'))
+        if ((items == 3) && (terminator1 == ':') && (terminator2 == '\t'))
         {
 
           // update the line's information, save it and ...
