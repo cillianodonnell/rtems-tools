@@ -91,7 +91,7 @@ class summary:
         line = summary_file.readline()
         return line.strip().split(' ')[0]
 
-class report_gen:
+class report_gen_html:
     def __init__(self, p_symbol_sets_list, p_target_dir):
         self.symbol_sets_list = p_symbol_sets_list
         self.target_dir = p_target_dir
@@ -320,6 +320,7 @@ class coverage_run(object):
         self.symbol_sets = []
         self.path_to_builddir= path_to_builddir
         self.no_clean = int(self.macros['_no_clean'])
+        self.report_format = self.config_map['report_format'][2]
 #        self.gcnos_file_path = path.join(self.coverage_config_path, 'rtems.gcnos')
 
     def prepare_environment(self):
@@ -389,7 +390,8 @@ class coverage_run(object):
 
     def _generate_reports(self):
         log.notice('Generating reports')
-        report = report_gen(self.symbol_sets, self.target_dir)
+        if self.report_format == 'html':
+            report = report_gen_html(self.symbol_sets, self.target_dir)
         report.generate()
 
     def _cleanup(self):
