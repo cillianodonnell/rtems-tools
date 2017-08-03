@@ -62,17 +62,16 @@ class summary:
             self.is_failure = True
             return
 
-        summary_file = open(self.summary_file_path,'r')
-        self.bytes_analyzed = self._get_next_with_colon(summary_file)
-        self.bytes_not_executed = self._get_next_with_colon(summary_file)
-        self.percentage_executed = self._get_next_with_colon(summary_file)
-        self.percentage_not_executed = self._get_next_with_colon(summary_file)
-        self.ranges_uncovered = self._get_next_with_colon(summary_file)
-        self.branches_total = self._get_next_with_colon(summary_file)
-        self.branches_uncovered = self._get_next_with_colon(summary_file)
-        self.branches_always_taken = self._get_next_without_colon(summary_file)
-        self.branches_never_taken = self._get_next_without_colon(summary_file)
-        summary_file.close()
+        with open(self.summary_file_path,'r') as summary_file:
+           self.bytes_analyzed = self._get_next_with_colon(summary_file)
+           self.bytes_not_executed = self._get_next_with_colon(summary_file)
+           self.percentage_executed = self._get_next_with_colon(summary_file)
+           self.percentage_not_executed = self._get_next_with_colon(summary_file)
+           self.ranges_uncovered = self._get_next_with_colon(summary_file)
+           self.branches_total = self._get_next_with_colon(summary_file)
+           self.branches_uncovered = self._get_next_with_colon(summary_file)
+           self.branches_always_taken = self._get_next_without_colon(summary_file)
+           self.branches_never_taken = self._get_next_without_colon(summary_file)
         if not self.branches_uncovered == '' and not self.branches_total == '':
             self.percentage_branches_covered = \
             1 - (float(self.branches_uncovered) / float(self.branches_total))
@@ -181,12 +180,9 @@ class report_gen_html:
         return '<a href="' + address + '">' + text + '</a>'
 
     def _create_index_file(self, head_section, content):
-        f = open(path.join(self.target_dir, "report.html"),"w")
-        try:
+        with open(path.join(self.target_dir, "report.html"),"w") as f:
             f.write(head_section)
             f.write(content)
-        finally:
-            f.close()
 
     def generate(self):
         partial_reports = self._find_partial_reports()
@@ -202,34 +198,32 @@ class symbols_configuration(object):
         self.symbol_sets = []
 
     def load(self, symbol_set_config_file, path_to_builddir):
-        scf = open(symbol_set_config_file, 'r')
-        for line in scf:
-            try:
-                if line.strip().startswith('symbolset'):
-                    self.symbol_sets.append(symbol_set('',[]))
-                else:
-                    splitted = line.split('=')
-                    if(len(splitted) == 2):
-                        key = splitted[0].strip()
-                        value = splitted[1].strip()
-                        if key == 'name':
-                            self.symbol_sets[-1].name = value
-                        elif key == 'lib':
-                            lib = os.path.join(path_to_builddir, value)
-                            self.symbol_sets[-1].libs.append(lib)
-                        else:
-                            raise error.general('invalid key: %s in symbol_sets.cfg' % (key, symbol_set_config_file))
+        with open(symbol_set_config_file, 'r') as scf:
+            for line in scf:
+                try:
+                    if line.strip().startswith('symbolset'):
+                        self.symbol_sets.append(symbol_set('',[]))
                     else:
-                        raise error.general('invalid format in symbol_sets.cfg') 
-            except:
-                raise error.general('invalid format in symbol_sets.cfg') 
-        scf.close()
+                        splitted = line.split('=')
+                        if(len(splitted) == 2):
+                            key = splitted[0].strip()
+                            value = splitted[1].strip()
+                            if key == 'name':
+                                self.symbol_sets[-1].name = value
+                            elif key == 'lib':
+                                lib = os.path.join(path_to_builddir, value)
+                                self.symbol_sets[-1].libs.append(lib)
+                            else:
+                                raise error.general('invalid key: %s in symbol_sets.cfg' % (key, symbol_set_config_file))
+                        else:
+                            raise error.general('use 1 and only 1 "=" per line in symbol_sets.cfg') 
+                except:
+                    raise error.general('invalid format in symbol_sets.cfg') 
 
     def save(self, path):
-        scf = open(path, 'w')
-        for sset in self.symbol_sets:
-            sset.write_set_file(path)
-        scf.close()
+        with open(path, 'w') as scf:
+            for sset in self.symbol_sets:
+                sset.write_set_file(path)
 
 class symbol_set(object):
     def __init__(self, name, libs):
@@ -248,12 +242,11 @@ class symbol_set(object):
         return True
 
     def write_set_file(self, path):
-        f = open(path, 'w')
-        f.write('symbolset:\n')
-        f.write('\t name=' + self.name + '\n')
-        for lib in self.libs:
-            f.write('\t lib=' + lib + '\n')
-        f.close()
+        with open(path, 'w') as f:
+           f.write('symbolset:\n')
+           f.write('\t name=' + self.name + '\n')
+           for lib in self.libs:
+               f.write('\t lib=' + lib + '\n')
 
 #class gcnos(object):
 #    def create_gcnos_file(self, gcnos_config_file_path, gcnos_file_path,
@@ -290,7 +283,7 @@ class covoar(object):
         executor = execute.execute(verbose=True, output=output_handler)
         exit_code = executor.shell(command, cwd=os.getcwd())
         if (exit_code[0] != 0):
-            raise error.general('failure. error code: %d' % (exit_code[0]))
+            raise error.general('covoar failure. exit code: %d' % (exit_code[0]))
         shutil.copy2(path.join(self.covoar_src_dir, 'table.js'),
         path.join(covoar_result_dir, 'table.js'))
         shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'),
@@ -330,19 +323,18 @@ class coverage_run(object):
         log.notice('Coverage environment prepared')
 
     def write_covoar_config(self, covoar_config_file):
-        ccf = open(covoar_config_file, 'w')
-        ccf.write('format = ' + self.config_map['format'][2] + '\n')
-        ccf.write('target = ' + self.config_map['target'][2] + '\n')
-        ccf.write('explanations = ' 
-        + self.macros.expand(self.config_map['explanations'][2]) + '\n')
-        ccf.write('coverageExtension = ' 
-        + self.config_map['coverage_extension'][2] + '\n')
-#        ccf.write('gcnosFile = ' 
-#        + self.macros.expand(self.config_map['gcnos_file'][2]) + '\n')
-        ccf.write('executableExtension = ' 
-        + self.config_map['executable_extension'][2] + '\n')
-        ccf.write('projectName = ' + self.config_map['project_name'][2] + '\n')
-        ccf.close()
+        with open(covoar_config_file, 'w') as ccf:
+            ccf.write('format = ' + self.config_map['format'][2] + '\n')
+            ccf.write('target = ' + self.config_map['target'][2] + '\n')
+            ccf.write('explanations = ' 
+            + self.macros.expand(self.config_map['explanations'][2]) + '\n')
+            ccf.write('coverageExtension = ' 
+            + self.config_map['coverage_extension'][2] + '\n')
+#            ccf.write('gcnosFile = ' 
+#            + self.macros.expand(self.config_map['gcnos_file'][2]) + '\n')
+            ccf.write('executableExtension = ' 
+            + self.config_map['executable_extension'][2] + '\n')
+            ccf.write('projectName = ' + self.config_map['project_name'][2] + '\n')
 
     def run(self):
         if self.executables == None:
