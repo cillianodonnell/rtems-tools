@@ -58,7 +58,7 @@ class summary:
 
     def parse(self):
         if(not path.exists(self.summary_file_path)):
-            raise error.general('summary file %s does not exist!' % (self.summary_file_path)) 
+            log.notice('summary file %s does not exist!' % (self.summary_file_path)) 
             self.is_failure = True
             return
 
@@ -274,7 +274,6 @@ class covoar(object):
             path.mkdir(covoar_result_dir)
         if (not path.exists(symbol_file)):
             raise error.general('symbol set file: coverage/%s.symcfg was not created for covoar, skipping %s' % (symbol_file, set_name))
-            return
         command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file 
         + ' -O ' + covoar_result_dir + ' ' + self.executable)
 #        if (path.exists(gcnos_file)):
@@ -319,6 +318,11 @@ class coverage_run(object):
         self.no_clean = int(self.macros['_no_clean'])
         self.report_format = self.config_map['report_format'][2]
         self.executable_extension = self.config_map['executable_extension'][2]
+        self.simulator_format = self.config_map['format'][2]
+        self.target_arch = self.config_map['target'][2]
+        self.explanations_txt = self.macros.expand(self.config_map['explanations'][2])
+        self.coverage_extension = self.config_map['coverage_extension'][2]
+        self.project_name = self.config_map['project_name'][2]
 #        self.gcnos_file_path = path.join(self.coverage_config_path, 'rtems.gcnos')
 
     def prepare_environment(self):
@@ -329,16 +333,14 @@ class coverage_run(object):
 
     def write_covoar_config(self, covoar_config_file):
         with open(covoar_config_file, 'w') as ccf:
-            ccf.write('format = ' + self.config_map['format'][2] + '\n')
-            ccf.write('target = ' + self.config_map['target'][2] + '\n')
-            ccf.write('explanations = ' 
-            + self.macros.expand(self.config_map['explanations'][2]) + '\n')
-            ccf.write('coverageExtension = ' 
-            + self.config_map['coverage_extension'][2] + '\n')
+            ccf.write('format = ' + self.simulator_format + '\n')
+            ccf.write('target = ' + self.target_arch + '\n')
+            ccf.write('explanations = ' + self.explanations_txt + '\n')
+            ccf.write('coverageExtension = ' + self.coverage_extension + '\n')
+            ccf.write('executableExtension = ' + self.executable_extension + '\n')
+            ccf.write('projectName = ' + self.project_name + '\n')
 #            ccf.write('gcnosFile = ' 
 #            + self.macros.expand(self.config_map['gcnos_file'][2]) + '\n')
-            ccf.write('executableExtension = ' + self.executable_extension + '\n')
-            ccf.write('projectName = ' + self.config_map['project_name'][2] + '\n')
 
     def run(self):
         if self.executables == None:
@@ -349,7 +351,6 @@ class coverage_run(object):
         self.write_covoar_config(covoar_config_file)
         if(not path.exists(covoar_config_file)):
             raise error.general('covoar configuration file: %s does not exist' % (path.abspath(covoar_config_file))) 
-            return False
         self._link_executables()
         symbol_config = symbols_configuration()
         symbol_config.load(self.symbol_config_path, self.path_to_builddir)
