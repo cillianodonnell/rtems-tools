@@ -275,13 +275,13 @@ class covoar(object):
         if (not path.exists(symbol_file)):
             raise error.general('symbol set file: coverage/%s.symcfg was not created for covoar, skipping %s' % (symbol_file, set_name))
             return
-        command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file +
-        ' -O ' + covoar_result_dir + ' ' + self.executable)
+        command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file 
+        + ' -O ' + covoar_result_dir + ' ' + self.executable)
 #        if (path.exists(gcnos_file)):
 #            command = command + ' -g ' + gcnos_file
 #        log.notice('%s' % (command))
         log.notice('Running covoar for %s' % (set_name))
-        executor = execute.execute(verbose=True, output=output_handler)
+        executor = execute.execute(verbose = True, output = self.output_handler)
         exit_code = executor.shell(command, cwd=os.getcwd())
         if (exit_code[0] != 0):
             raise error.general('covoar failure exit code: %d' % (exit_code[0]))
@@ -291,6 +291,9 @@ class covoar(object):
         path.join(covoar_result_dir, 'covoar.css'))
         log.notice('Coverage run for %s finished successfully.' % (set_name))
         log.notice('-----------------------------------------------')
+
+    def output_handler(self, text):
+        log.notice('%s' % (text))
 
 class coverage_run(object):
     '''
@@ -396,5 +399,3 @@ class coverage_run(object):
     def _summarize(self):
         log.notice('Coverage analysis finished. You can find results in %s' % (self.target_dir))
 
-def output_handler(text):
-    log.notice('%s' % (text))
