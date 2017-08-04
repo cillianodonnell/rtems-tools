@@ -43,12 +43,14 @@ from rtemstoolkit import log
 from rtemstoolkit import path
 from rtemstoolkit import stacktraces
 from rtemstoolkit import version
+from rtemstoolkit import check
 
 from . import bsps
 from . import config
 from . import console
 from . import options
 from . import report
+from . import coverage
 
 #
 # The following fragment is taken from https://bitbucket.org/gutworth/six
@@ -232,6 +234,19 @@ def killall(tests):
     for test in tests:
         test.kill()
 
+def coverage_get_obj(opts, path_to_builddir):
+    log.notice('Coverage analysis requested')
+    opts.defaults.load('%%{_configdir}/coverage.mc')
+    if not check.check_exe('__covoar', opts.defaults['__covoar']):
+        raise error.general('Covoar not found!')
+    coverage_obj = coverage.coverage_run(opts.defaults, path_to_builddir)
+    return coverage_obj
+
+def coverage_run(opts, coverage, symbol_set_file, executables):
+    coverage.config_map = opts.defaults.macros['coverage']
+    coverage.executables = executables
+    coverage.run(symbol_set_file)
+
 def run(command_path = None):
     import sys
     tests = []
@@ -297,13 +312,7 @@ def run(command_path = None):
             raise error.general('Path to build directory not provided')
         coverage_enabled = opts.find_arg('--coverage')
         if coverage_enabled:
-            import coverage
-            from rtemstoolkit import check
-            log.notice('Coverage analysis requested')
-            opts.defaults.load('%%{_configdir}/coverage.mc')
-            if not check.check_exe('__covoar', opts.defaults['__covoar']):
-                raise error.general('Covoar not found!')
-            coverage = coverage.coverage_run(opts.defaults, path_to_builddir[1])
+            coverage = coverage_get_obj(opts, path_to_builddir[1])
             symbol_set_file = coverage.prepare_environment();
         report_mode = opts.find_arg('--report-mode')
         if report_mode:
@@ -367,9 +376,7 @@ def run(command_path = None):
         log.notice('Average test time: %s' % (str((end_time - start_time) / total)))
         log.notice('Testing time     : %s' % (str(end_time - start_time)))
         if coverage_enabled:
-            coverage.config_map = opts.defaults.macros['coverage']
-            coverage.executables = executables
-            coverage.run(symbol_set_file)
+            coverage_run(opts, coverage, symbol_set_file, executables)
     except error.general as gerr:
         print(gerr)
         sys.exit(1)
