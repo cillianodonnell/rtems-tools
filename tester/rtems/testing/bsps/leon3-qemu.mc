@@ -47,7 +47,7 @@
 
 [global]
 bsp:                      none,    none,     'leon3'
-coverage_supported:	      none,	   none,	   '1'
+coverage_supported:       none,    none,     '1'
 
 [leon3]
 leon3:                    none,    none,     '%{_rtscripts}/qemu.cfg'
@@ -55,11 +55,11 @@ leon3_arch:               none,    none,     'sparc'
 leon3_opts:               none,    none,     '-M leon3_generic'
 
 [coverage]
-format:		              none,    none,     'QEMU'
-target:		              none,    none,     'sparc-rtems4.12'
-explanations:	          none,    none,     '%{_rtscripts}/coverage/Explanations.txt'
-coverage_extension:	      none,    none,     'exe.cov'
-gcnos_file:	              none,    none,     '%{_rtscripts}/coverage/rtems.gcnos'
+format:                   none,    none,     'QEMU'
+target:                   none,    none,     'sparc-rtems4.12'
+explanations:             none,    none,     '%{_rtscripts}/coverage/Explanations.txt'
+coverage_extension:       none,    none,     'exe.cov'
+gcnos_file:               none,    none,     '%{_rtscripts}/coverage/rtems.gcnos'
 executable_extension:     none,    none,     'exe'
-project_name:	          none,    none,     'RTEMS 4.12'
+project_name:             none,    none,     'RTEMS 4.12'
 report_format:            none,    none,     'html'
