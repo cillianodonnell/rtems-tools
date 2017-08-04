@@ -304,7 +304,7 @@ def run(command_path = None):
             if not check.check_exe('__covoar', opts.defaults['__covoar']):
                 raise error.general('Covoar not found!')
             coverage = coverage.coverage_run(opts.defaults, path_to_builddir[1])
-            coverage.prepare_environment();
+            symbol_set_file = coverage.prepare_environment();
         report_mode = opts.find_arg('--report-mode')
         if report_mode:
             if report_mode[1] != 'failures' and \
@@ -369,7 +369,7 @@ def run(command_path = None):
         if coverage_enabled:
             coverage.config_map = opts.defaults.macros['coverage']
             coverage.executables = executables
-            coverage.run()
+            coverage.run(symbol_set_file)
     except error.general as gerr:
         print(gerr)
         sys.exit(1)
