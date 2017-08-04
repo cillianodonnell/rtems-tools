@@ -331,7 +331,7 @@ class coverage_run(object):
         if(path.exists(self.traces_dir)):
            path.removeall(self.traces_dir)
         path.mkdir(self.traces_dir)
-        if self.config_map == None:
+        if self.config_map is None:
             raise error.general('no coverage configuration map specified in %s config file' % {bsp})
         self.write_covoar_config(self.covoar_config_file)
         if(not path.exists(self.covoar_config_file)):
@@ -366,7 +366,7 @@ class coverage_run(object):
 #            + self.macros.expand(self.config_map['gcnos_file'][2]) + '\n')
 
     def run(self, symbol_set_file):
-        if self.executables == None:
+        if self.executables is None:
             raise error.general('no test executables provided.')
         self._link_executables()
         for sset in self.symbol_config.symbol_sets:
