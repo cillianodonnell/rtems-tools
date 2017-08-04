@@ -36,7 +36,8 @@ from rtemstoolkit import macros
 
 from datetime import datetime
 
-import options
+from . import options
+
 import shutil
 import os
 
@@ -385,7 +386,7 @@ class coverage_run(object):
             dst = path.join(self.traces_dir, path.basename(exe))
             try:
                 os.link(exe, dst)
-            except OSError, e:
+            except OSError as e:
                 raise error.general('creating hardlink from %s to %s failed!' % (path.abspath(exe), dst))
         log.notice('Symlinks made')
 
@@ -402,4 +403,3 @@ class coverage_run(object):
 
     def _summarize(self):
         log.notice('Coverage analysis finished. You can find results in %s' % (self.target_dir))
-
