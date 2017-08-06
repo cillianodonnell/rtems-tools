@@ -29,7 +29,7 @@
 #
 
 #
-# Manage paths locally. The internally the path is in Unix or shell format and
+# Manage paths locally. Internally the path is in Unix or shell format and
 # we convert to the native format when performing operations at the Python
 # level. This allows macro expansion to work.
 #
