@@ -113,7 +113,6 @@ class test(object):
         if not path.isfile(executable):
             raise error.general('cannot find executable: %s' % (executable))
         self.opts.defaults['test_executable'] = executable
-        self.opts.defaults['test_executable_name'] = path.basename(executable)
         if rtems_tools:
             rtems_tools_bin = path.join(self.opts.defaults.expand(rtems_tools), 'bin')
             if not path.isdir(rtems_tools_bin):
