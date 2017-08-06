@@ -262,12 +262,13 @@ class covoar(object):
     '''
     Covoar runner
     '''
-    def __init__(self, base_result_dir, config_dir, traces_dir, covoar_src_dir, executable_extension):
+    def __init__(self, base_result_dir, config_dir, traces_dir, covoar_src_dir, executable_extension, executables):
         self.base_result_dir = base_result_dir
         self.config_dir = config_dir
         self.traces_dir = traces_dir
         self.covoar_src_dir = covoar_src_dir
         self.executable = path.join(self.traces_dir, '*.' + executable_extension)
+        self.executables = ' '.join(executables)
 
     def run(self, set_name, covoar_config_file, symbol_file):
         covoar_result_dir = path.join(self.base_result_dir, set_name)
@@ -276,7 +277,7 @@ class covoar(object):
         if (not path.exists(symbol_file)):
             raise error.general('symbol set file: coverage/%s.symcfg was not created for covoar, skipping %s' % (symbol_file, set_name))
         command = ('covoar -C' + covoar_config_file + ' -S ' + symbol_file 
-        + ' -O ' + covoar_result_dir + ' ' + self.executable)
+        + ' -O ' + covoar_result_dir + ' ' + self.executables)
 #        if (path.exists(gcnos_file)):
 #            command = command + ' -g ' + gcnos_file
 #        log.notice('%s' % (command))
@@ -369,26 +370,15 @@ class coverage_run(object):
     def run(self, symbol_set_file):
         if self.executables is None:
             raise error.general('no test executables provided.')
-        self._link_executables()
         for sset in self.symbol_config.symbol_sets:
             covoar_run = covoar(self.test_dir, self.symbol_config_path,
             self.traces_dir, path.join(self.rtdir, 'covoar'), 
-            self.executable_extension)
+            self.executable_extension, self.executables)
             covoar_run.run(sset.name, self.covoar_config_file,
             symbol_set_file)
         self._generate_reports();
         self._cleanup();
         self._summarize();
-
-    def _link_executables(self):
-        log.notice('Linking executables to %s' % (self.traces_dir))
-        for exe in self.executables:
-            dst = path.join(self.traces_dir, path.basename(exe))
-            try:
-                os.link(exe, dst)
-            except OSError as e:
-                raise error.general('creating hardlink from %s to %s failed!' % (path.abspath(exe), dst))
-        log.notice('Symlinks made')
 
     def _generate_reports(self):
         log.notice('Generating reports')
@@ -400,6 +390,13 @@ class coverage_run(object):
         if not self.no_clean:
             log.notice('Cleaning workspace.')
             path.removeall(self.traces_dir)
+            for exe in self.executables:
+                trace_file = exe + '.cov'
+                if path.exists(trace_file):
+                    os.remove(trace_file)
+                objdump_file = exe + '.dmp'
+                if path.exists(objdump_file):
+                    os.remove(objdump_file)
 
     def _summarize(self):
         log.notice('Coverage analysis finished. You can find results in %s' % (self.target_dir))
