@@ -92,11 +92,12 @@ class summary:
         return line.strip().split(' ')[0]
 
 class report_gen_html:
-    def __init__(self, p_symbol_sets_list, p_target_dir):
+    def __init__(self, p_symbol_sets_list, p_target_dir, rtdir):
         self.symbol_sets_list = p_symbol_sets_list
         self.target_dir = p_target_dir
         self.partial_reports_files = list(["index.html", "summary.txt"])
         self.number_of_columns = 1
+        self.covoar_src_path = path.join(rtdir, 'covoar')
 
     def _find_partial_reports(self):
         partial_reports = {}
@@ -191,6 +192,22 @@ class report_gen_html:
         index_content = self._prepare_index_content(partial_reports)
         self._create_index_file(head_section,index_content)
 
+    def add_covoar_src_path(self):
+        table_js_path = path.join(self.covoar_src_path, 'table.js')
+        covoar_css_path = path.join(self.covoar_src_path, 'covoar.css')
+        for symbol_set in self.symbol_sets_list:
+            symbol_set_dir = path.join(self.target_dir, "test", symbol_set)
+            html_files = os.listdir(symbol_set_dir)
+            for html_file in html_files:
+                html_file = path.join(symbol_set_dir, html_file)
+                if path.exists(html_file) and 'html' in html_file:
+                    with open(html_file, 'r') as f:
+                        file_data = f.read()
+                    file_data = file_data.replace('table.js', table_js_path)
+                    file_data = file_data.replace('covoar.css', covoar_css_path)
+                    with open(html_file, 'w') as f:
+                        f.write(file_data)
+
 class symbols_configuration(object):
     '''
     Manages symbols configuration - reading from symbol file
@@ -262,11 +279,10 @@ class covoar(object):
     '''
     Covoar runner
     '''
-    def __init__(self, base_result_dir, config_dir, traces_dir, covoar_src_dir, executable_extension, executables):
+    def __init__(self, base_result_dir, config_dir, traces_dir, executable_extension, executables):
         self.base_result_dir = base_result_dir
         self.config_dir = config_dir
         self.traces_dir = traces_dir
-        self.covoar_src_dir = covoar_src_dir
         self.executable = path.join(self.traces_dir, '*.' + executable_extension)
         self.executables = ' '.join(executables)
 
@@ -286,10 +302,6 @@ class covoar(object):
         exit_code = executor.shell(command, cwd=os.getcwd())
         if (exit_code[0] != 0):
             raise error.general('covoar failure exit code: %d' % (exit_code[0]))
-        shutil.copy2(path.join(self.covoar_src_dir, 'table.js'),
-        path.join(covoar_result_dir, 'table.js'))
-        shutil.copy2(path.join(self.covoar_src_dir, 'covoar.css'),
-        path.join(covoar_result_dir, 'covoar.css'))
         log.notice('Coverage run for %s finished successfully.' % (set_name))
         log.notice('-----------------------------------------------')
 
@@ -372,8 +384,7 @@ class coverage_run(object):
             raise error.general('no test executables provided.')
         for sset in self.symbol_config.symbol_sets:
             covoar_run = covoar(self.test_dir, self.symbol_config_path,
-            self.traces_dir, path.join(self.rtdir, 'covoar'), 
-            self.executable_extension, self.executables)
+            self.traces_dir, self.executable_extension, self.executables)
             covoar_run.run(sset.name, self.covoar_config_file,
             symbol_set_file)
         self._generate_reports();
@@ -383,8 +394,9 @@ class coverage_run(object):
     def _generate_reports(self):
         log.notice('Generating reports')
         if self.report_format == 'html':
-            report = report_gen_html(self.symbol_sets, self.target_dir)
-        report.generate()
+            report = report_gen_html(self.symbol_sets, self.target_dir, self.rtdir)
+            report.generate()
+            report.add_covoar_src_path()
 
     def _cleanup(self):
         if not self.no_clean:
