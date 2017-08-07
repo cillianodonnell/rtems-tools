@@ -73,7 +73,7 @@ class summary:
            self.branches_uncovered = self._get_next_with_colon(summary_file)
            self.branches_always_taken = self._get_next_without_colon(summary_file)
            self.branches_never_taken = self._get_next_without_colon(summary_file)
-        if not self.branches_uncovered == '' and not self.branches_total == '':
+        if len(self.branches_uncovered) > 0 and len(self.branches_total) > 0:
             self.percentage_branches_covered = \
             1 - (float(self.branches_uncovered) / float(self.branches_total))
         else:
