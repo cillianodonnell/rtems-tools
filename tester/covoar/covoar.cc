@@ -41,15 +41,15 @@ std::list<Coverage::ExecutableInfo*> executablesToAnalyze;
 const char*                          explanations = NULL;
 char*                                progname;
 const char*                          symbolsFile = NULL;
-const char*							 symbolSetFile = NULL;
-const char*		             gcnosFileName = NULL;
-char				     gcnoFileName[FILE_NAME_LENGTH];
-char				     gcdaFileName[FILE_NAME_LENGTH];
-char				     gcovBashCommand[256];
+const char*                          symbolSetFile = NULL;
+const char*	                         gcnosFileName = NULL;
+char                                 gcnoFileName[FILE_NAME_LENGTH];
+char                                 gcdaFileName[FILE_NAME_LENGTH];
+char                                 gcovBashCommand[256];
 const char*                          target = NULL;
 const char*                          format = NULL;
-FILE*				     gcnosFile = NULL;
-Gcov::GcovData* 		     gcovFile;
+FILE*                                gcnosFile = NULL;
+Gcov::GcovData*                      gcovFile;
 
 /*
  *  Print program usage message
@@ -74,7 +74,6 @@ void usage()
     "  -c COVERAGEFILE_EXTENSION - extension of the coverage files to analyze\n"
     "  -g GCNOS_LIST             - name of file with list of *.gcno files\n"
     "  -p PROJECT_NAME           - name of the project\n"
-    "  -C ConfigurationFileName  - name of configuration file\n"
     "  -O Output_Directory       - name of output directory (default=."
     "\n",
     progname,
@@ -84,73 +83,6 @@ void usage()
 
 #define PrintableString(_s) \
        ((!(_s)) ? "NOT SET" : (_s))
-
-/*
- *  Configuration File Support
- */
-#include "ConfigFile.h"
-Configuration::FileReader *CoverageConfiguration;
-Configuration::Options_t Options[] = {
-  { "explanations",         NULL },
-  { "format",               NULL },
-  { "symbolsFile",          NULL },
-  { "symbolSetFile",		    NULL },
-  { "outputDirectory",      NULL },
-  { "executableExtension",  NULL },
-  { "coverageExtension",    NULL },
-  { "gcnosFile",            NULL },
-  { "target",               NULL },
-  { "verbose",              NULL },
-  { "projectName",          NULL },
-  { NULL,                   NULL }
-};
-
-bool isTrue(const char *value)
-{
-  if ( !value )                  return false;
-  if ( !strcmp(value, "true") )  return true;
-  if ( !strcmp(value, "TRUE") )  return true;
-  if ( !strcmp(value, "yes") )   return true;
-  if ( !strcmp(value, "YES") )   return true;
-  return false;
-}
-
-#define GET_BOOL(_opt, _val) \
-  if (isTrue(CoverageConfiguration->getOption(_opt))) \
-    _val = true;
-
-#define GET_STRING(_opt, _val) \
-  do { \
-    const char *_t; \
-    _t = CoverageConfiguration->getOption(_opt); \
-    if ( _t ) _val = _t; \
-  } while(0)
-
-
-void check_configuration(void)
-{
-  GET_BOOL( "verbose", Verbose );
-
-  GET_STRING( "format",               format );
-  GET_STRING( "target",               target );
-  GET_STRING( "explanations",         explanations );
-  GET_STRING( "symbolsFile",          symbolsFile );
-  GET_STRING( "outputDirectory",      outputDirectory );
-  GET_STRING( "executableExtension",  executableExtension );
-  GET_STRING( "coverageExtension",    coverageFileExtension );
-  GET_STRING( "gcnosFile",            gcnosFileName );
-  GET_STRING( "projectName",          projectName );
-
-  // Now calculate some values
-  if ( coverageFileExtension )
-    coverageExtensionLength = strlen( coverageFileExtension );
-
-  if ( executableExtension )
-    executableExtensionLength = strlen( executableExtension );
-
-  if ( format )
-    coverageFormat = Coverage::CoverageFormatToEnum( format );
-}
 
 int main(
   int    argc,
@@ -165,7 +97,6 @@ int main(
   int                                            opt;
   const char*                                    singleExecutable = NULL;
 
-  CoverageConfiguration = new Configuration::FileReader(Options);
 
   //
   // Process command line options.
@@ -174,7 +105,6 @@ int main(
 
   while ((opt = getopt(argc, argv, "C:1:L:e:c:g:E:f:s:S:T:O:p:v")) != -1) {
     switch (opt) {
-      case 'C': CoverageConfiguration->processFile( optarg ); break;
       case '1': singleExecutable      = optarg; break;
       case 'L': dynamicLibrary        = optarg; break;
       case 'e': executableExtension   = optarg; break;
@@ -183,7 +113,7 @@ int main(
       case 'E': explanations          = optarg; break;
       case 'f': format                = optarg; break;
       case 's': symbolsFile           = optarg; break;
-      case 'S': symbolSetFile		      = optarg; break;
+      case 'S': symbolSetFile         = optarg; break;
       case 'T': target                = optarg; break;
       case 'O': outputDirectory       = optarg; break;
       case 'v': Verbose               = true;   break;
@@ -193,9 +123,6 @@ int main(
         exit( -1 );
     }
   }
-
-  // Do not trust any arguments until after this point.
-  check_configuration();
 
   // XXX We need to verify that all of the needed arguments are non-NULL.
 
