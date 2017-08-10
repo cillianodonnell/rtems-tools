@@ -233,7 +233,7 @@ namespace Coverage {
 
   FILE* ObjdumpProcessor::getFile( std::string fileName ) 
   {
-    char               dumpFile[128];
+    char               dumpFile[256];
     FILE*              objdumpFile;
     char               buffer[ 512 ];
     int                status;
@@ -244,7 +244,7 @@ namespace Coverage {
     if (FileIsNewer( fileName.c_str(), dumpFile )) {
       sprintf(
         buffer,
-        "%s -Cda --section=.text --source %s | sed -e \'s/ *$//\' >%s",
+        "%s -Cda --section=.text --source %s | sed -e \'s/ *$//\' >%s ",
         TargetInfo->getObjdump(),
         fileName.c_str(),
         dumpFile
@@ -345,6 +345,7 @@ namespace Coverage {
     uint32_t           endAddress;
     uint32_t           instructionOffset;
     int                items;
+    int                found;
     objdumpLine_t      lineInfo;
     FILE*              objdumpFile;
     uint32_t           offset;
@@ -352,8 +353,13 @@ namespace Coverage {
     uint32_t           startAddress = 0;
     char               symbol[ MAX_LINE_LENGTH ];
     char               terminator1;
+    char               terminatorOne;
     char               terminator2;
     objdumpLines_t     theInstructions;
+    char               instruction[ MAX_LINE_LENGTH ];
+    char               ID[ MAX_LINE_LENGTH ];
+    std::string        call = "";
+    std::string        jumpTableID = "";
 
     // Obtain the objdump file.
     if (!executableInformation->hasDynamicLibrary())
@@ -399,6 +405,15 @@ namespace Coverage {
       lineInfo.nopSize       = 0;
       lineInfo.isBranch      = false;
 
+      // See if it is a jump table.
+      found = sscanf(
+        inputBuffer,
+        "%x%c\t%*[^\t]%c%s %*x %*[^+]%s",
+        &instructionOffset, &terminatorOne, &terminator2, instruction, ID
+      );
+      call = instruction;
+      jumpTableID = ID;
+
       // Look for the start of a symbol's objdump and extract
       // offset and symbol (i.e. offset <symbolname>:).
       items = sscanf(
@@ -437,7 +452,27 @@ namespace Coverage {
           theInstructions.push_back( lineInfo );
         }
       }
+      // If it looks like a jump table...
+      else if ((found == 5) && (terminatorOne == ':') && (terminator2 == '\t')
+               && (call.find("call") != std::string::npos)
+               && (jumpTableID.find("+0x") != std::string::npos)
+               && processSymbol)
+      {
 
+          endAddress = executableInformation->getLoadAddress() + offset - 1;
+
+          // If we are currently processing a symbol, finalize it.
+          if (processSymbol) {
+            finalizeSymbol(
+              executableInformation,
+              currentSymbol,
+              startAddress,
+              endAddress,
+              theInstructions
+            );
+          }
+          processSymbol = false;
+      }
       else if (processSymbol) {
 
         // See if it is the dump of an instruction.
