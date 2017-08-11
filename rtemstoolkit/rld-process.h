@@ -191,8 +191,8 @@ namespace rld
 
       std::string       _name;      //< The name of the file.
       const std::string suffix;     //< The temp file's suffix.
-      bool              overridden; //< The name is overridden; may no exist.
-      int               fd;         //< The file descriptor
+      bool              overridden; //< The name is overridden; may not exist.
+      int               fd;         //< The file descriptor.
       char              buf[256];   //< The read buffer.
       size_t            level;      //< The level of data in the buffer.
     };
@@ -203,7 +203,7 @@ namespace rld
     void set_keep_temporary_files ();
 
     /**
-     * Clean up the temporaryes.
+     * Clean up the temporaries.
      */
     void temporaries_clean_up ();
 
