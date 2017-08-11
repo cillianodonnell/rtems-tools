@@ -102,7 +102,8 @@ class report_gen_html:
     def _find_partial_reports(self):
         partial_reports = {}
         for symbol_set in self.symbol_sets_list:
-            set_summary = summary(path.join(self.target_dir, "test", symbol_set))
+            set_summary = summary(path.join(self.target_dir, "test",
+                                  symbol_set))
             set_summary.parse()
             partial_reports[symbol_set] = set_summary
         return partial_reports
@@ -204,7 +205,8 @@ class report_gen_html:
                     with open(html_file, 'r') as f:
                         file_data = f.read()
                     file_data = file_data.replace('table.js', table_js_path)
-                    file_data = file_data.replace('covoar.css', covoar_css_path)
+                    file_data = file_data.replace('covoar.css',
+                                                  covoar_css_path)
                     with open(html_file, 'w') as f:
                         f.write(file_data)
 
@@ -266,15 +268,6 @@ class symbol_set(object):
            for lib in self.libs:
                f.write('\t lib=' + lib + '\n')
 
-#class gcnos(object):
-#    def create_gcnos_file(self, gcnos_config_file_path, gcnos_file_path,
-#    path_to_build_dir):
-#        with open(gcnos_file_path, 'w') as gcnos_file:
-#            with open(gcnos_config_file_path, 'r') as config_file:
-#                for line in config_file:
-#                    if line.strip():
-#                        gcnos_file.write(path.join(path_to_build_dir, line))
-
 class covoar(object):
     '''
     Covoar runner
@@ -293,7 +286,7 @@ class covoar(object):
         self.coverage_extension = config_map['coverage_extension'][2]
         self.project_name = config_map['project_name'][2]
 
-    def run(self, set_name, covoar_config_file, symbol_file):
+    def run(self, set_name, symbol_file):
         covoar_result_dir = path.join(self.base_result_dir, set_name)
         if (not path.exists(covoar_result_dir)):
             path.mkdir(covoar_result_dir)
@@ -305,9 +298,6 @@ class covoar(object):
                   + ' -c' + self.coverage_extension
                   + ' -e' + self.executable_extension
                   + ' -p' + self.project_name + ' ' + self.executables)
-#        if (path.exists(gcnos_file)):
-#            command = command + ' -g ' + gcnos_file
-#        log.notice('%s' % (command))
         log.notice('Running covoar for %s' % (set_name))
         executor = execute.execute(verbose = True, output = self.output_handler)
         exit_code = executor.shell(command, cwd=os.getcwd())
@@ -337,48 +327,42 @@ class coverage_run(object):
                                             'symbol_sets.cfg')
         self.traces_dir = path.join(self.target_dir, 'coverage')
         self.config_map = self.macros.macros['coverage']
-        self.covoar_config_file = path.join(self.traces_dir, 'config')
         self.executables = None
         self.symbol_sets = []
         self.path_to_builddir= path_to_builddir
         self.symbol_config = symbols_configuration()
         self.no_clean = int(self.macros['_no_clean'])
         self.report_format = self.config_map['report_format'][2]
-#        self.gcnos_file_path = path.join(self.coverage_config_path, 'rtems.gcnos')
 
     def prepare_environment(self):
+        symbol_set_files = []
         if(path.exists(self.traces_dir)):
            path.removeall(self.traces_dir)
         path.mkdir(self.traces_dir)
         if self.config_map is None:
             raise error.general('no coverage configuration map specified in %s config file' % {bsp})
-        self.symbol_config.load(self.symbol_config_path, self.path_to_builddir)
+        self.symbol_config.load(self.symbol_config_path,
+                                self.path_to_builddir)
         for sset in self.symbol_config.symbol_sets:
             if sset.is_valid():
-                symbol_set_file = path.join(self.traces_dir, sset.name 
-                + '.symcfg')
+                symbol_set_file = (path.join(self.traces_dir,
+                                             sset.name + '.symcfg'))
                 sset.write_set_file(symbol_set_file)
                 self.symbol_sets.append(sset.name)
             else:
                 log.notice('Invalid symbol set %s in symbol_sets.cfg. skipping covoar run.' % (sset.name))
         log.notice('Coverage environment prepared')
-        return symbol_set_file
-        # Create gcnos_configuration
-        # load paths to gcno files, join paths with path_to_builddir
-        # write gcnos file to traces dir
-#        gcnos_file = path.join(self.traces_dir, 'rtems.gcnos') 
-#        gcnos().create_gcnos_file(
-#        self.gcnos_file_path, gcnos_file, self.path_to_builddir)
 
-    def run(self, symbol_set_file):
+    def run(self):
         if self.executables is None:
             raise error.general('no test executables provided.')
         for sset in self.symbol_config.symbol_sets:
-            covoar_run = covoar(self.test_dir, self.symbol_config_path,
+            symbol_set_file = (path.join(self.traces_dir,
+                                         sset.name + '.symcfg'))
+            covoar_obj = covoar(self.test_dir, self.symbol_config_path,
                                 self.traces_dir, self.executables,
                                 self.config_map, self.macros)
-            covoar_run.run(sset.name, self.covoar_config_file,
-                           symbol_set_file)
+            covoar_obj.run(sset.name, symbol_set_file)
         self._generate_reports();
         self._cleanup();
         self._summarize();

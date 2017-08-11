@@ -241,10 +241,10 @@ def coverage_get_obj(opts, path_to_builddir):
     coverage_obj = coverage.coverage_run(opts.defaults, path_to_builddir)
     return coverage_obj
 
-def coverage_run(opts, coverage, symbol_set_file, executables):
+def coverage_run(opts, coverage, executables):
     coverage.config_map = opts.defaults.macros['coverage']
     coverage.executables = executables
-    coverage.run(symbol_set_file)
+    coverage.run()
 
 def run(command_path = None):
     import sys
@@ -312,7 +312,7 @@ def run(command_path = None):
         coverage_enabled = opts.find_arg('--coverage')
         if coverage_enabled:
             coverage = coverage_get_obj(opts, path_to_builddir[1])
-            symbol_set_file = coverage.prepare_environment();
+            coverage.prepare_environment();
         report_mode = opts.find_arg('--report-mode')
         if report_mode:
             if report_mode[1] != 'failures' and \
@@ -375,7 +375,7 @@ def run(command_path = None):
         log.notice('Average test time: %s' % (str((end_time - start_time) / total)))
         log.notice('Testing time     : %s' % (str(end_time - start_time)))
         if coverage_enabled:
-            coverage_run(opts, coverage, symbol_set_file, executables)
+            coverage_run(opts, coverage, executables)
     except error.general as gerr:
         print(gerr)
         sys.exit(1)
