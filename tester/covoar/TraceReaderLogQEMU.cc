@@ -49,9 +49,6 @@
 #include "TraceReaderLogQEMU.h"
 #include "TraceList.h"
 
-/* XXX really not always right */
-typedef uint32_t target_ulong;
-
 #include "qemu-traces.h"
 
 #if HAVE_STAT64

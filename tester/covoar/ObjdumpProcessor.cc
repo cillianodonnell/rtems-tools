@@ -135,7 +135,7 @@ namespace Coverage {
     char*        cStatus;
     uint32_t     offset;
 
-    // This method should only be call for a dynamic library.
+    // This method should only be called for a dynamic library.
     if (!theExecutable->hasDynamicLibrary())
       return 0;
 

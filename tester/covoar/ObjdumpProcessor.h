@@ -118,12 +118,12 @@ namespace Coverage {
     );
 
     /*!
-     *  This method returns the next address in othe objdumpList.
+     *  This method returns the next address in the objdumpList.
      */
     uint32_t getAddressAfter( uint32_t address );
 
     /*!
-     *  This method returns true if the instrucation is
+     *  This method returns true if the instruction is
      *  an instruction that results in a code branch, otherwise
      *  it returns false.
      */
