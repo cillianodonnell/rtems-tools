@@ -120,4 +120,4 @@ def build(bld):
                 source = ['covoar.cc'],
                 use = ['ccovoar','RLD'],
                 cflags = ['-O2', '-g'],
-                includes = ['.'])
+                includes = ['.'] + rtl_includes)
