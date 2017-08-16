@@ -208,7 +208,7 @@ namespace rld
     void temporaries_clean_up ();
 
     /**
-     * The arguments containter has a single argument per element.
+     * The arguments container has a single argument per element.
      */
     typedef std::vector < std::string > arg_container;
 
