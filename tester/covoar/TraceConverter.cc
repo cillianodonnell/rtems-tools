@@ -10,15 +10,18 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <getopt.h>
+#include <signal.h>
+#include <unistd.h>
 
 #include "qemu-log.h"
-
 #include "TraceReaderLogQEMU.h"
 #include "TraceWriterQEMU.h"
 #include "TraceList.h"
 #include "ObjdumpProcessor.h"
 #include "app_common.h"
 #include "TargetFactory.h"
+
+#include "rld-process.h"
 
 char*       progname;
 
@@ -30,6 +33,40 @@ void usage()
     progname
   );
   exit(1);
+}
+
+static void
+fatal_signal (int signum)
+{
+  signal (signum, SIG_DFL);
+
+  rld::process::temporaries_clean_up ();
+
+  /*
+   * Get the same signal again, this time not handled, so its normal effect
+   * occurs.
+   */
+  kill (getpid (), signum);
+}
+
+static void
+setup_signals (void)
+{
+  if (signal (SIGINT, SIG_IGN) != SIG_IGN)
+    signal (SIGINT, fatal_signal);
+#ifdef SIGHUP
+  if (signal (SIGHUP, SIG_IGN) != SIG_IGN)
+    signal (SIGHUP, fatal_signal);
+#endif
+  if (signal (SIGTERM, SIG_IGN) != SIG_IGN)
+    signal (SIGTERM, fatal_signal);
+#ifdef SIGPIPE
+  if (signal (SIGPIPE, SIG_IGN) != SIG_IGN)
+    signal (SIGPIPE, fatal_signal);
+#endif
+#ifdef SIGCHLD
+  signal (SIGCHLD, SIG_DFL);
+#endif
 }
 
 int main(
@@ -45,7 +82,10 @@ int main(
   const char                  *tracefile  =  "";
   const char                  *logname = "/tmp/qemu.log";
   Coverage::ExecutableInfo*    executableInfo;
+  rld::process::tempfile       objdumpFile (".dmp");
+  rld::process::tempfile       err (".err");
    
+  setup_signals();
   //
   // Process command line options.
   //
@@ -95,7 +135,7 @@ int main(
       objdumpProcessor->determineLoadAddress( executableInfo )
     );
 
-  objdumpProcessor->loadAddressTable( executableInfo );
+  objdumpProcessor->loadAddressTable( executableInfo, objdumpFile, err );
 
   log.processFile( logname );
 

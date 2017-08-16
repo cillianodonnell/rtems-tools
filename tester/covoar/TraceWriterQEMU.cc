@@ -34,8 +34,6 @@
  *  reading the QEMU coverage data files.
  */
 
-#include "covoar-config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -44,8 +42,9 @@
 #include "TraceWriterQEMU.h"
 #include "ExecutableInfo.h"
 #include "CoverageMap.h"
-
 #include "qemu-traces.h"
+
+#include "rld-process.h"
 
 #if HAVE_STAT64
 #define STAT stat64

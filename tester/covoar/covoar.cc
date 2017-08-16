@@ -130,6 +130,8 @@ int main(
     int                                            i;
     int                                            opt;
     const char*                                    singleExecutable = NULL;
+    rld::process::tempfile                         objdumpFile (".dmp");
+    rld::process::tempfile                         err (".err");
 
     //
     // Process command line options.
@@ -383,7 +385,7 @@ int main(
         );
 
       // Load the objdump for the symbols in this executable.
-      objdumpProcessor->load( *eitr );
+      objdumpProcessor->load( *eitr, objdumpFile, err );
     }
 
     //

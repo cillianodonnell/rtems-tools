@@ -13,6 +13,8 @@
 #include "ExecutableInfo.h"
 #include "TargetBase.h"
 
+#include "rld-process.h"
+
 namespace Coverage {
 
   /*! @class ObjdumpProcessor
@@ -96,17 +98,21 @@ namespace Coverage {
     );
 
     /*!
-     *  This method returns a file pointer to the objdump file
+     *  This method fills a tempfile with the .text section of objdump
      *  for the given file name.  
      */
-    FILE* getFile( std::string fileName ); 
+    void getFile( std::string fileName,
+                  rld::process::tempfile& dmp,
+                  rld::process::tempfile& err ); 
 
     /*!
      *  This method fills the objdumpList list with all the 
      *  instruction addresses in the object dump file.
      */
     void loadAddressTable (
-      ExecutableInfo* const executableInformation
+      ExecutableInfo* const executableInformation,
+      rld::process::tempfile& dmp,
+      rld::process::tempfile& err
     );
 
     /*!
@@ -114,7 +120,9 @@ namespace Coverage {
      *  the specified executable.
      */
     void load(
-      ExecutableInfo* const executableInformation
+      ExecutableInfo* const executableInformation,
+      rld::process::tempfile& dmp,
+      rld::process::tempfile& err
     );
 
     /*!
