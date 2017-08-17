@@ -4,13 +4,14 @@
  *  Created on: Aug 5, 2014
  *      Author: Krzysztof Mięsowicz <krzysztof.miesowicz@gmail.com>
  */
-
-#include "SymbolSet.h"
-#include "rld.h"
-#include "rld-process.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+
+#include "SymbolSet.h"
+
+#include "rld.h"
+#include "rld-process.h"
 
 namespace Symbols {
 
@@ -56,7 +57,8 @@ void SymbolSet::parseNmOutput(std::ifstream& nm_out, const std::string& lib) {
 	}
 }
 
-void SymbolSet::generateSymbolFile(std::string filePath, std::string target) {
+void SymbolSet::generateSymbolFile(rld::process::tempfile& filePath,
+                                   std::string target) {
 	std::string nm_output = "nm.out";
 	std::string nm_error = "nm.err";
 	std::string libFiles;
@@ -93,7 +95,7 @@ void SymbolSet::generateSymbolFile(std::string filePath, std::string target) {
 	std::remove(nm_output.c_str());
 	std::remove(nm_error.c_str());
 
-	std::ofstream outputFile(filePath);
+	std::ofstream outputFile(filePath.name());
 	for (std::string symbol : symbols) {
 		outputFile << symbol << std::endl;
 	}

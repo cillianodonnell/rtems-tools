@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "rld-process.h"
+
 namespace Symbols {
 
 class SymbolSet {
@@ -34,7 +36,8 @@ public:
 		libraries.push_back(libraryPath);
 	}
 
-	void generateSymbolFile(std::string filePath, std::string target);
+	void generateSymbolFile(rld::process::tempfile& filePath,
+                            std::string target);
 
 private:
 	std::string name;

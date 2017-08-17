@@ -70,7 +70,8 @@ void usage()
             << " -E EXPLANATIONS     - file of explanations" << std::endl
             << " -s SYMBOLS_FILE     - symbols of interest" << std::endl
             << " -S SYMBOL_SET_FILE  - path to symbol_sets.cfg" << std::endl
-            << " -1 EXECUTABLE       - executable to get symbols from" << std::endl
+            << " -1 EXECUTABLE       - executable to get symbols from"
+            << std::endl
             << " -e EXE_EXTENSION    - suffix for executables" << std::endl
             << " -c COVERAGEFILE_EXT - coverage file suffix" << std::endl
             << " -g GCNOS_LIST       - list of *.gcno files" << std::endl
@@ -132,6 +133,7 @@ int main(
     const char*                                    singleExecutable = NULL;
     rld::process::tempfile                         objdumpFile (".dmp");
     rld::process::tempfile                         err (".err");
+    rld::process::tempfile                         syms (".syms");
 
     //
     // Process command line options.
@@ -347,8 +349,8 @@ int main(
 
         Symbols::SymbolSet& set = symbolSets[0];
         std::cout << "Generating symbol file for " + set.getName() << std::endl;
-        set.generateSymbolFile(set.getName() + ".syms", target);
-        SymbolsToAnalyze->load((set.getName() + ".syms").c_str());
+        set.generateSymbolFile(syms, target);
+        SymbolsToAnalyze->load(syms.name().c_str());
     }
 
     if (Verbose)
