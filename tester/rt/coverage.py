@@ -354,18 +354,20 @@ class coverage_run(object):
         log.notice('Coverage environment prepared')
 
     def run(self):
-        if self.executables is None:
-            raise error.general('no test executables provided.')
-        for sset in self.symbol_config.symbol_sets:
-            symbol_set_file = (path.join(self.traces_dir,
-                                         sset.name + '.symcfg'))
-            covoar_obj = covoar(self.test_dir, self.symbol_config_path,
-                                self.traces_dir, self.executables,
-                                self.config_map, self.macros)
-            covoar_obj.run(sset.name, symbol_set_file)
-        self._generate_reports();
-        self._cleanup();
-        self._summarize();
+        try:
+            if self.executables is None:
+                raise error.general('no test executables provided.')
+            for sset in self.symbol_config.symbol_sets:
+                symbol_set_file = (path.join(self.traces_dir,
+                                             sset.name + '.symcfg'))
+                covoar_obj = covoar(self.test_dir, self.symbol_config_path,
+                                    self.traces_dir, self.executables,
+                                    self.config_map, self.macros)
+                covoar_obj.run(sset.name, symbol_set_file)
+            self._generate_reports();
+            self._summarize();
+        finally:
+            self._cleanup();
 
     def _generate_reports(self):
         log.notice('Generating reports')
@@ -377,15 +379,12 @@ class coverage_run(object):
 
     def _cleanup(self):
         if not self.no_clean:
-            log.notice('Cleaning workspace.')
+            log.notice('***Cleaning tempfiles***')
             path.removeall(self.traces_dir)
             for exe in self.executables:
                 trace_file = exe + '.cov'
                 if path.exists(trace_file):
                     os.remove(trace_file)
-                objdump_file = exe + '.dmp'
-                if path.exists(objdump_file):
-                    os.remove(objdump_file)
 
     def _summarize(self):
         log.notice('Coverage analysis finished. You can find results in %s' % (self.target_dir))

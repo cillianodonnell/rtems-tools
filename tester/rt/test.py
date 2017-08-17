@@ -234,7 +234,6 @@ def killall(tests):
         test.kill()
 
 def coverage_get_obj(opts, path_to_builddir):
-    log.notice('Coverage analysis requested')
     opts.defaults.load('%%{_configdir}/coverage.mc')
     if not check.check_exe('__covoar', opts.defaults['__covoar']):
         raise error.general('Covoar not found!')
