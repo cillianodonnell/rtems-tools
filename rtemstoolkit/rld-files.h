@@ -903,7 +903,7 @@ namespace rld
       archives& get_archives ();
 
       /**
-       * Get the objects inlcuding those in archives.
+       * Get the objects including those in archives.
        */
       objects& get_objects ();
 

@@ -77,40 +77,42 @@ void usage()
             << " -g GCNOS_LIST       - list of *.gcno files" << std::endl
             << " -p PROJECT_NAME     - name of the project" << std::endl
             << " -O Output_Directory - output directory default=." << std::endl
+            << " -d debug            - disable cleaning of tempfiles."
+            << std::endl
             << std::endl;
 }
 
 static void
-fatal_signal (int signum)
+fatal_signal( int signum )
 {
-  signal (signum, SIG_DFL);
+  signal( signum, SIG_DFL );
 
-  rld::process::temporaries_clean_up ();
+  rld::process::temporaries_clean_up();
 
   /*
    * Get the same signal again, this time not handled, so its normal effect
    * occurs.
    */
-  kill (getpid (), signum);
+  kill( getpid(), signum );
 }
 
 static void
-setup_signals (void)
+setup_signals( void )
 {
-  if (signal (SIGINT, SIG_IGN) != SIG_IGN)
-    signal (SIGINT, fatal_signal);
+  if ( signal( SIGINT, SIG_IGN ) != SIG_IGN )
+    signal( SIGINT, fatal_signal );
 #ifdef SIGHUP
-  if (signal (SIGHUP, SIG_IGN) != SIG_IGN)
-    signal (SIGHUP, fatal_signal);
+  if ( signal( SIGHUP, SIG_IGN ) != SIG_IGN )
+    signal( SIGHUP, fatal_signal );
 #endif
-  if (signal (SIGTERM, SIG_IGN) != SIG_IGN)
-    signal (SIGTERM, fatal_signal);
+  if ( signal( SIGTERM, SIG_IGN ) != SIG_IGN )
+    signal( SIGTERM, fatal_signal );
 #ifdef SIGPIPE
-  if (signal (SIGPIPE, SIG_IGN) != SIG_IGN)
-    signal (SIGPIPE, fatal_signal);
+  if ( signal( SIGPIPE, SIG_IGN ) != SIG_IGN )
+    signal( SIGPIPE, fatal_signal );
 #endif
 #ifdef SIGCHLD
-  signal (SIGCHLD, SIG_DFL);
+  signal( SIGCHLD, SIG_DFL );
 #endif
 }
 
@@ -126,22 +128,26 @@ int main(
   {
     std::list<std::string>::iterator               citr;
     std::string                                    coverageFileName;
+    std::string                                    notFound;
     std::list<Coverage::ExecutableInfo*>::iterator eitr;
     Coverage::ExecutableInfo*                      executableInfo = NULL;
     int                                            i;
     int                                            opt;
     const char*                                    singleExecutable = NULL;
-    rld::process::tempfile                         objdumpFile (".dmp");
-    rld::process::tempfile                         err (".err");
-    rld::process::tempfile                         syms (".syms");
+    std::string                                    option;
+    rld::process::tempfile                         objdumpFile( ".dmp" );
+    rld::process::tempfile                         err( ".err" );
+    rld::process::tempfile                         syms( ".syms" );
+    bool                                           debug = false;
 
-    //
-    // Process command line options.
-    //
+   /*
+    * Process command line options.
+    */
     progname = argv[0];
 
-    while ((opt = getopt(argc, argv, "C:1:L:e:c:g:E:f:s:S:T:O:p:v")) != -1) {
-      switch (opt) {
+    while ( (opt = getopt( argc, argv, "C:1:L:e:c:g:E:f:s:S:T:O:p:v:d" )) 
+                != std::string::npos ) {
+      switch( opt ) {
         case '1': singleExecutable      = optarg; break;
         case 'L': dynamicLibrary        = optarg; break;
         case 'e': executableExtension   = optarg; break;
@@ -155,6 +161,7 @@ int main(
         case 'O': outputDirectory       = optarg; break;
         case 'v': Verbose               = true;   break;
         case 'p': projectName           = optarg; break;
+        case 'd': debug                 = true;   break;
         default: /* '?' */
           usage();
           exit( -1 );
@@ -163,112 +170,132 @@ int main(
 
     try
     {
-      //
-      // Validate inputs.
-      //
+     /*
+      * Validate inputs.
+      */
 
-      std::string option;
-      // Target name must be set.
-      if (!target) {
+     /*
+      * Target name must be set.
+      */
+      if ( !target ) {
         option = "target -T";
         throw option;
       }
 
-      // Validate format.
-      if (!format) {
+     /*
+      * Validate format.
+      */
+      if ( !format ) {
         option = "format -f";
         throw option;
       }
 
-      // Validate that we have a symbols of interest file.
-      if (!symbolSetFile) {
+     /*
+      * Validate that we have a symbols of interest file.
+      */
+      if ( !symbolSetFile ) {
         option = "symbol set file -S";
         throw option;
       }
 
-      // Has path to explanations.txt been specified.
-      if (!explanations) {
+     /*
+      * Has path to explanations.txt been specified.
+      */
+      if ( !explanations ) {
         option = "explanations -E";
         throw option;
       }
 
-      // Has coverage file extension been specified.
-      if (!coverageFileExtension) {
+     /*
+      * Has coverage file extension been specified.
+      */
+      if ( !coverageFileExtension ) {
         option = "coverage extension -c";
         throw option;
       }
 
-      // Has executable extension been specified.
-      if (!executableExtension) {
+     /*
+      * Has executable extension been specified.
+      */
+      if ( !executableExtension ) {
         option = "executable extension -e";
         throw option;
       }
 
-      // Check for project name.
-      if (!projectName) {
+     /*
+      * Check for project name.
+      */
+      if ( !projectName ) {
         option = "project name -p";
         throw option;
       }
     }
-    catch(std::string option)
+    catch( std::string option )
     {
       std::cout << "error missing option: " + option << std::endl;
       usage();
       throw;
     }
 
-    // If a single executable was specified, process the remaining
-    // arguments as coverage file names.
-    if (singleExecutable) {
+   /*
+    * If a single executable was specified, process the remaining
+    * arguments as coverage file names.
+    */
+    if ( singleExecutable ) {
 
-      // Ensure that the executable is readable.
-      if (!FileIsReadable( singleExecutable )) {
+     /*
+      * Ensure that the executable is readable.
+      */
+      if ( !FileIsReadable( singleExecutable ) ) {
         std::string oneExec = singleExecutable;
-        throw rld::error ("cannot read", "executable: " + oneExec);
+        throw rld::error( "cannot read", "executable: " + oneExec );
       }
-
       else {
+        for ( i=optind; i < argc; i++ ) {
 
-        for (i=optind; i < argc; i++) {
-
-          // Ensure that the coverage file is readable.
-          if (!FileIsReadable( argv[i] )) {
+         /*
+          * Ensure that the coverage file is readable.
+          */
+          if ( !FileIsReadable( argv[i] ) ) {
             std::string coverageFile = argv[i];
-            throw rld::error ("cannot read", "coverage file: " + coverageFile);
+            throw rld::error( "cannot read", "coverage file: " + coverageFile );
           }
-
           else
             coverageFileNames.push_back( argv[i] );
         }
 
-        // If there was at least one coverage file, create the
-        // executable information.
-        if (!coverageFileNames.empty()) {
-          if (dynamicLibrary)
+       /*
+        * If there was at least one coverage file, create the
+        * executable information.
+        */
+        if ( !coverageFileNames.empty() ) {
+          if ( dynamicLibrary )
             executableInfo = new Coverage::ExecutableInfo(
               singleExecutable, dynamicLibrary
             );
           else
             executableInfo = new Coverage::ExecutableInfo( singleExecutable );
-
           executablesToAnalyze.push_back( executableInfo );
         }
       }
     }
 
-    // If not invoked with a single executable, process the remaining
-    // arguments as executables and derive the coverage file names.
+   /*
+    * If not invoked with a single executable, process the remaining
+    * arguments as executables and derive the coverage file names.
+    */
     else {
       try
       {
-        for (i = optind; i < argc; i++) {
+        for ( i = optind; i < argc; i++ ) {
 
-          // Ensure that the executable is readable.
-          if (!FileIsReadable( argv[i] )) {
+         /*
+          * Ensure that the executable is readable.
+          */
+          if ( !FileIsReadable( argv[i] ) ) {
             std::string executable = argv[i];
             throw executable;
           }
-
           else {
             coverageFileName = argv[i];
             coverageFileName.replace(
@@ -276,11 +303,9 @@ int main(
               executableExtensionLength,
               coverageFileExtension
             );
-
-            if (!FileIsReadable( coverageFileName.c_str() )) {
+            if ( !FileIsReadable( coverageFileName.c_str() ) ) {
               throw coverageFileName;
             }
-
             else {
               executableInfo = new Coverage::ExecutableInfo( argv[i] );
               executablesToAnalyze.push_back( executableInfo );
@@ -289,143 +314,165 @@ int main(
           }
         }
       }
-      catch (std::string fileName)
+      catch( std::string fileName )
       {
         std::cout << fileName + "is not readable." << std::endl;
       }
     }
 
-    // Ensure that there is at least one executable to process.
-    if (executablesToAnalyze.empty()) {
-      throw rld::error ("no executables to analyse",
-                        "covoar cmd line arguments");
+   /*
+    * Ensure that there is at least one executable to process.
+    */
+    if ( executablesToAnalyze.empty() ) {
+      throw rld::error( "no executables to analyse",
+                         "covoar cmd line arguments" );
     }
-
-    if (Verbose) {
-      if (singleExecutable)
-        std::cout << "Processing a single executable and multiple coverage files" << std::endl;
+    if ( Verbose ) {
+      if ( singleExecutable )
+        std::cout << "Processing single executable and multiple coverage files"
+                  << std::endl;
       else
-        std::cout << "Processing multiple executable/coverage file pairs" << std::endl;
+        std::cout << "Processing multiple executable/coverage file pairs"
+                  << std::endl;
       std::cout << "Coverage Format : " << format << std::endl
                 << "Target          : " << target << std::endl
                 << std::endl;
   #if 1
-      // Process each executable/coverage file pair.
+     /*
+      * Process each executable/coverage file pair.
+      */
       eitr = executablesToAnalyze.begin();
-      for (citr = coverageFileNames.begin();
-       citr != coverageFileNames.end();
-       citr++) {
-
-      std::cout << "Coverage file " << (*citr)
-                << "for executable " << ((*eitr)->getFileName()) << std::endl;
-
-      if (!singleExecutable)
+      for ( citr = coverageFileNames.begin();
+            citr != coverageFileNames.end();
+            citr++ ) {
+      std::cout << "Coverage file " << *citr
+                << "for executable " << (*eitr)->getFileName() << std::endl;
+      if ( !singleExecutable )
         eitr++;
       }
   #endif
     }
 
-    //
-    // Create data to support analysis.
-    //
+   /*
+    * Create data to support analysis.
+    */
 
-    // Create data based on target.
+   /*
+    * Create data based on target.
+    */
     TargetInfo = Target::TargetFactory( target );
 
-    // Create the set of desired symbols.
+   /*
+    * Create the set of desired symbols.
+    */
     SymbolsToAnalyze = new Coverage::DesiredSymbols();
 
-    //Load symbols from specified symbolsFile
-    if(symbolsFile) {
+   /*
+    *Load symbols from specified symbolsFile
+    */
+    if ( symbolsFile ) {
         SymbolsToAnalyze->load( symbolsFile );
     }
 
-    //Read symbol configuration file and load needed symbols
-    if(symbolSetFile) {
+   /*
+    *Read symbol configuration file and load needed symbols
+    */
+    if ( symbolSetFile ) {
         std::cout << "Reading configuration symbol set file: " << symbolSetFile
                   << std::endl;
         Symbols::SymbolSetReader ssr;
-        std::vector<Symbols::SymbolSet> symbolSets = ssr.readSetFile(symbolSetFile);
-
+        std::vector<Symbols::SymbolSet> symbolSets = ssr.readSetFile( symbolSetFile );
         Symbols::SymbolSet& set = symbolSets[0];
         std::cout << "Generating symbol file for " + set.getName() << std::endl;
-        set.generateSymbolFile(syms, target);
-        SymbolsToAnalyze->load(syms.name().c_str());
+        set.generateSymbolFile( syms, target );
+        SymbolsToAnalyze->load( syms.name().c_str() );
     }
-
-    if (Verbose)
+    if ( Verbose )
       std::cout << "Analyzing " + SymbolsToAnalyze->set.size()
                 << "symbols" << std::endl;
-
-    // Create explanations.
+   /*
+    * Create explanations.
+    */
     AllExplanations = new Coverage::Explanations();
     if ( explanations )
       AllExplanations->load( explanations );
 
-    // Create coverage map reader.
-    coverageReader = Coverage::CreateCoverageReader(coverageFormat);
-    if (!coverageReader) {
-      throw rld::error("Unable to create coverage file reader", "CreateCoverageReader");
+   /*
+    * Create coverage map reader.
+    */
+    coverageReader = Coverage::CreateCoverageReader( coverageFormat );
+    if ( !coverageReader ) {
+      throw rld::error( "Unable to create coverage file reader",
+                        "CreateCoverageReader" );
     }
 
-    // Create the objdump processor.
+   /*
+    * Create the objdump processor.
+    */
     objdumpProcessor = new Coverage::ObjdumpProcessor();
 
-    // Prepare each executable for analysis.
-    for (eitr = executablesToAnalyze.begin();
-         eitr != executablesToAnalyze.end();
-         eitr++) {
-
-      if (Verbose)
-        std::cout << "Extracting information from " + ((*eitr)->getFileName())
+   /*
+    * Prepare each executable for analysis.
+    */
+    for ( eitr = executablesToAnalyze.begin();
+          eitr != executablesToAnalyze.end();
+          eitr++ ) {
+      if ( Verbose )
+        std::cout << "Extracting information from " + (*eitr)->getFileName()
                   << std::endl;
-
-      // If a dynamic library was specified, determine the load address.
-      if (dynamicLibrary)
+     /*
+      * If a dynamic library was specified, determine the load address.
+      */
+      if ( dynamicLibrary )
         (*eitr)->setLoadAddress(
           objdumpProcessor->determineLoadAddress( *eitr )
         );
-
-      // Load the objdump for the symbols in this executable.
+     /*
+      * Load the objdump for the symbols in this executable.
+      */
       objdumpProcessor->load( *eitr, objdumpFile, err );
     }
 
-    //
-    // Analyze the coverage data.
-    //
+   /*
+    * Analyze the coverage data.
+    */
 
-    // Process each executable/coverage file pair.
+   /*
+    * Process each executable/coverage file pair.
+    */
     eitr = executablesToAnalyze.begin();
-    for (citr = coverageFileNames.begin();
-         citr != coverageFileNames.end();
-         citr++) {
+    for ( citr = coverageFileNames.begin();
+          citr != coverageFileNames.end();
+          citr++ ) {
 
-      if (Verbose)
-        std::cout << "Processing coverage file " + (*citr)
-                  << "for executable " + ((*eitr)->getFileName()) << std::endl;
-
-      // Process its coverage file.
+      if ( Verbose )
+        std::cout << "Processing coverage file " << *citr
+                  << "for executable " << (*eitr)->getFileName() << std::endl;
+     /*
+      * Process its coverage file.
+      */
       coverageReader->processFile( (*citr).c_str(), *eitr );
 
-      // Merge each symbols coverage map into a unified coverage map.
+     /*
+      * Merge each symbols coverage map into a unified coverage map.
+      */
       (*eitr)->mergeCoverage();
 
-      // DEBUG Print ExecutableInfo content
-      //(*eitr)->dumpExecutableInfo();
-
-      if (!singleExecutable)
+      if ( !singleExecutable )
         eitr++;
     }
 
-    // Do necessary preprocessing of uncovered ranges and branches
-    if (Verbose)
+   /*
+    * Do necessary preprocessing of uncovered ranges and branches
+    */
+    if ( Verbose )
       std::cout << "Preprocess uncovered ranges and branches" << std::endl;
     SymbolsToAnalyze->preprocess();
 
-    //
-    // Generate Gcov reports
-    //
-  /*  if (Verbose)
+   /*
+    * Generate Gcov reports
+    */
+/*  if (Verbose)
       fprintf( stderr, "Generating Gcov reports...\n");
     gcnosFile = fopen ( gcnosFileName , "r" );
 
@@ -451,54 +498,71 @@ int main(
         delete gcovFile;
       }
     fclose( gcnosFile );
-    }*/
-
-    // Determine the uncovered ranges and branches.
-    if (Verbose)
+    }
+*/
+   /*
+    * Determine the uncovered ranges and branches.
+    */
+    if ( Verbose )
       std::cout << "Computing uncovered ranges and branches" << std::endl;
     SymbolsToAnalyze->computeUncovered();
 
-    // Calculate remainder of statistics.
-    if (Verbose)
+   /*
+    * Calculate remainder of statistics.
+    */
+    if ( Verbose )
       std::cout << "Calculate statistics" << std::endl;
     SymbolsToAnalyze->calculateStatistics();
 
-    // Look up the source lines for any uncovered ranges and branches.
-    if (Verbose)
+   /*
+    * Look up the source lines for any uncovered ranges and branches.
+    */
+    if ( Verbose )
         std::cout << "Looking up source lines for uncovered ranges and branches"
                   << std::endl;
     SymbolsToAnalyze->findSourceForUncovered();
 
-    //
-    // Report the coverage data.
-    //
-    if (Verbose)
+   /*
+    * Report the coverage data.
+    */
+    if ( Verbose )
       std::cout << "Generate Reports" << std::endl;
     Coverage::GenerateReports();
 
-    // Write explanations that were not found.
+   /*
+    * Write explanations that were not found.
+    */
     if ( explanations ) {
-      std::string notFound;
-
       notFound = outputDirectory;
       notFound += "/";
       notFound += "ExplanationsNotFound.txt";
 
-      if (Verbose)
+      if ( Verbose )
         std::cout << "Writing Not Found Report (" + notFound
                   << ")" << std::endl;
       AllExplanations->writeNotFound( notFound.c_str() );
     }
-
+   
+   /*
+    * Leaves tempfiles around if debug flag (-d) is enabled.
+    */
+    if ( debug ) {
+      objdumpFile.override( "objdump_file" );
+      objdumpFile.keep();
+      err.override( "objdump_exec_log" );
+      err.keep();
+      syms.override( "symbols_list" );
+      syms.keep();
+    }
   }
-  catch (rld::error re)
+  catch( rld::error re )
   {
     std::cerr << "error: "
               << re.where << ": " << re.what
               << std::endl;
     ec = 1;
   }
-  catch (...)
+  catch( ... )
   {
     /*
      * Helps to know if this happens.

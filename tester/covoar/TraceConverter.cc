@@ -21,6 +21,7 @@
 #include "app_common.h"
 #include "TargetFactory.h"
 
+#include "rld.h"
 #include "rld-process.h"
 
 char*       progname;
@@ -36,36 +37,36 @@ void usage()
 }
 
 static void
-fatal_signal (int signum)
+fatal_signal( int signum )
 {
-  signal (signum, SIG_DFL);
+  signal( signum, SIG_DFL );
 
-  rld::process::temporaries_clean_up ();
+  rld::process::temporaries_clean_up();
 
   /*
    * Get the same signal again, this time not handled, so its normal effect
    * occurs.
    */
-  kill (getpid (), signum);
+  kill( getpid(), signum );
 }
 
 static void
-setup_signals (void)
+setup_signals( void )
 {
-  if (signal (SIGINT, SIG_IGN) != SIG_IGN)
-    signal (SIGINT, fatal_signal);
+  if ( signal (SIGINT, SIG_IGN) != SIG_IGN )
+    signal( SIGINT, fatal_signal );
 #ifdef SIGHUP
-  if (signal (SIGHUP, SIG_IGN) != SIG_IGN)
-    signal (SIGHUP, fatal_signal);
+  if ( signal( SIGHUP, SIG_IGN ) != SIG_IGN )
+    signal( SIGHUP, fatal_signal );
 #endif
-  if (signal (SIGTERM, SIG_IGN) != SIG_IGN)
-    signal (SIGTERM, fatal_signal);
+  if ( signal( SIGTERM, SIG_IGN ) != SIG_IGN )
+    signal( SIGTERM, fatal_signal );
 #ifdef SIGPIPE
-  if (signal (SIGPIPE, SIG_IGN) != SIG_IGN)
-    signal (SIGPIPE, fatal_signal);
+  if ( signal( SIGPIPE, SIG_IGN ) != SIG_IGN )
+    signal( SIGPIPE, fatal_signal );
 #endif
 #ifdef SIGCHLD
-  signal (SIGCHLD, SIG_DFL);
+  signal( SIGCHLD, SIG_DFL );
 #endif
 }
 
@@ -82,17 +83,18 @@ int main(
   const char                  *tracefile  =  "";
   const char                  *logname = "/tmp/qemu.log";
   Coverage::ExecutableInfo*    executableInfo;
-  rld::process::tempfile       objdumpFile (".dmp");
-  rld::process::tempfile       err (".err");
+  rld::process::tempfile       objdumpFile( ".dmp" );
+  rld::process::tempfile       err( ".err" );
    
   setup_signals();
-  //
-  // Process command line options.
-  //
+
+  /*
+   * Process command line options.
+   */
   progname = argv[0];
 
-  while ((opt = getopt(argc, argv, "c:e:l:L:t:v")) != -1) {
-    switch (opt) {
+  while ( (opt = getopt( argc, argv, "c:e:l:L:t:v" )) != -1 ) {
+    switch( opt ) {
       case 'c': cpuname = optarg;        break;
       case 'e': executable = optarg;     break;
       case 'l': logname = optarg;        break;
@@ -103,42 +105,42 @@ int main(
     }
   }
 
-  // Make sure we have all the required parameters
+ /*
+  * Make sure we have all the required parameters
+  */
   if ( !cpuname ) {
     fprintf( stderr, "cpuname not specified\n" );
     usage();
   }
-
   if ( !executable ) {
     fprintf( stderr, "executable not specified\n" );
     usage();
   }
-
   if ( !tracefile ) {
     fprintf( stderr, "output trace file not specified\n" );
     usage();
   }
 
-  // Create toolnames.
+ /*
+  * Create toolnames.
+  */
   TargetInfo = Target::TargetFactory( cpuname );
 
-  if (dynamicLibrary)
+  if ( dynamicLibrary )
     executableInfo = new Coverage::ExecutableInfo( executable, dynamicLibrary );
   else
     executableInfo = new Coverage::ExecutableInfo( executable );
 
   objdumpProcessor = new Coverage::ObjdumpProcessor();
  
-  // If a dynamic library was specified, determine the load address.
-  if (dynamicLibrary)
+ /*
+  * If a dynamic library was specified, determine the load address.
+  */
+  if ( dynamicLibrary )
     executableInfo->setLoadAddress(
       objdumpProcessor->determineLoadAddress( executableInfo )
     );
-
   objdumpProcessor->loadAddressTable( executableInfo, objdumpFile, err );
-
   log.processFile( logname );
-
   trace.writeFile( tracefile, &log );
-
 }
