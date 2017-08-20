@@ -145,8 +145,7 @@ int main(
     */
     progname = argv[0];
 
-    while ( (opt = getopt( argc, argv, "C:1:L:e:c:g:E:f:s:S:T:O:p:v:d" )) 
-                != std::string::npos ) {
+    while ( (opt = getopt( argc, argv, "C:1:L:e:c:g:E:f:s:S:T:O:p:v:d" )) != -1 ) {
       switch( opt ) {
         case '1': singleExecutable      = optarg; break;
         case 'L': dynamicLibrary        = optarg; break;
